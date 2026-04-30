@@ -1,0 +1,32 @@
+{
+  "name": "skribe-app",
+  "version": "1.0.0",
+  "description": "App de transcrição de áudio offline com whisper.cpp e pyannote",
+  "main": "src/main/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev:renderer": "cd src/renderer && npm run dev",
+    "build": "cd src/renderer && npm run build && electron-builder",
+    "setup:whisper": "node scripts/setup-whisper.js",
+    "setup:diarization": "node scripts/setup-diarization.js",
+    "setup:model": "node scripts/download-model.js"
+  },
+  "devDependencies": {
+    "concurrently": "9.1.2",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.skribe.app",
+    "productName": "Skribe",
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "files": [
+      "src/main/**/*",
+      "src/renderer/dist/**/*",
+      "resources/**/*"
+    ]
+  }
+}
