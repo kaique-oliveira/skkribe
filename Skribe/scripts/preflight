@@ -1,0 +1,41 @@
+#!/bin/bash
+
+echo "🔧 Verificando requisitos do sistema..."
+
+# Verificar macOS version
+OS_VERSION=$(sw_vers -productVersion)
+MAJOR_VERSION=$(echo $OS_VERSION | cut -d. -f1)
+
+if [ "$MAJOR_VERSION" -lt 14 ]; then
+    echo "❌ macOS 14.0 ou superior necessário (você tem $OS_VERSION)"
+    exit 1
+fi
+
+echo "✅ macOS $OS_VERSION - OK"
+
+# Verificar se AVFoundation está disponível
+if ! xcrun -find swiftc &>/dev/null; then
+    echo "⚠️  Ferramentas de desenvolvimento não detectadas"
+    echo "   Skribe funcionará, mas recomenda-se instalar Xcode Command Line Tools"
+fi
+
+# Verificar espaço em disco (mínimo 500MB)
+AVAILABLE_SPACE=$(df /Applications | tail -1 | awk '{print $4}')
+if [ "$AVAILABLE_SPACE" -lt 500000 ]; then
+    echo "❌ Espaço em disco insuficiente (mínimo 500MB)"
+    exit 1
+fi
+
+echo "✅ Espaço em disco - OK"
+
+# Verificar permissões
+if [ ! -w /Applications ]; then
+    echo "❌ Permissão negada para /Applications"
+    exit 1
+fi
+
+echo "✅ Permissões de instalação - OK"
+
+echo ""
+echo "✅ Todos os requisitos atendidos!"
+exit 0
