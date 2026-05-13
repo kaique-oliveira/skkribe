@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Skribe</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <PublishProfile>win-x64.pubxml</PublishProfile>
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <WindowsPackageType>None</WindowsPackageType>
+    <ApplicationIcon>Assets\Skribe.ico</ApplicationIcon>
+    <AssemblyName>Skribe</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WinUI 3 -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.241114003" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
+
+    <!-- MVVM helpers (ObservableObject, ICommand) -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+
+    <!-- Whisper.cpp .NET bindings — local Whisper transcription -->
+    <PackageReference Include="Whisper.net" Version="1.7.4" />
+    <PackageReference Include="Whisper.net.Runtime" Version="1.7.4" />
+    <!-- Optional Vulkan runtime for GPU (AMD/Intel/NVIDIA). Uncomment to enable: -->
+    <!-- <PackageReference Include="Whisper.net.Runtime.Vulkan" Version="1.7.4" /> -->
+    <!-- Optional CUDA runtime for NVIDIA only: -->
+    <!-- <PackageReference Include="Whisper.net.Runtime.Cuda" Version="1.7.4" /> -->
+
+    <!-- Speaker diarization (PyAnnote v3 via ONNX) -->
+    <PackageReference Include="org.k2-fsa.sherpa-onnx" Version="1.10.30" />
+    <PackageReference Include="org.k2-fsa.sherpa-onnx.runtime.win-x64" Version="1.10.30" />
+
+    <!-- Audio decoding + recording (MP3, M4A, WAV, WMA, WASAPI loopback) -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+  </ItemGroup>
+</Project>

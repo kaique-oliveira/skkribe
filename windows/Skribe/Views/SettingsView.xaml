@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Skribe.Views.SettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer Padding="32">
+        <StackPanel Spacing="24">
+            <TextBlock Text="Performance" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+
+            <StackPanel Spacing="10">
+                <TextBlock Text="Modelo de transcrição" FontSize="13" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <StackPanel x:Name="ModelsPanel" Spacing="8"/>
+                <TextBlock Text="Os modelos são baixados automaticamente na primeira vez (~1-2 min dependendo da conexão)."
+                           FontSize="11" Foreground="{StaticResource TextTertiaryBrush}" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="Sobre" FontSize="13" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <TextBlock Text="Skribe usa Whisper.cpp + sherpa-onnx (PyAnnote v3) para transcrição e diarização 100% local. Nenhum dado sai do seu PC."
+                           FontSize="11" Foreground="{StaticResource TextTertiaryBrush}" TextWrapping="Wrap"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

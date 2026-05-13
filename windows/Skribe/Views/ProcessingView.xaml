@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Skribe.Views.ProcessingView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="20" Padding="40">
+        <FontIcon x:Name="PhaseIcon" FontSize="44" Foreground="{StaticResource PurpleBrush}"/>
+        <TextBlock x:Name="PhaseLabel" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}"/>
+        <TextBlock x:Name="PhaseDetail" FontSize="13" HorizontalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+
+        <Grid x:Name="StepsGrid" Margin="40,8,40,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+        </Grid>
+
+        <Border CornerRadius="14" Background="#0DFFFFFF" Padding="14,7" HorizontalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <FontIcon Glyph="&#xE916;" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <TextBlock x:Name="TimerText" FontFamily="Cascadia Mono,Consolas" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <TextBlock Text="·" Foreground="{StaticResource TextTertiaryBrush}"/>
+                <TextBlock x:Name="StartTimeText" FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"/>
+            </StackPanel>
+        </Border>
+
+        <TextBlock x:Name="ProgressMessage" FontSize="11" Foreground="{StaticResource TextTertiaryBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="500" TextAlignment="Center"/>
+    </StackPanel>
+</UserControl>
