@@ -7,7 +7,7 @@ using Whisper.net.Ggml;
 
 namespace Skribe.Services;
 
-public sealed class TranscriptionService : IAsyncDisposable
+public sealed class TranscriptionService : IDisposable
 {
     public sealed record WordTiming(double Start, double End, string Word);
     public sealed record SegmentWithWords(double Start, double End, string Text, IReadOnlyList<WordTiming> Words);
@@ -31,7 +31,7 @@ public sealed class TranscriptionService : IAsyncDisposable
 
         await using var processor = _factory.CreateBuilder()
             .WithLanguage("pt")             // force Portuguese (parity with Mac)
-            .WithTokenTimestamps()          // produces word-ish timestamps inside Segments
+            .WithTokenTimestamps()          // word-ish timestamps inside Segments.Tokens
             .WithThreads(Math.Max(1, Environment.ProcessorCount - 1))
             .Build();
 
@@ -40,17 +40,17 @@ public sealed class TranscriptionService : IAsyncDisposable
 
         await foreach (var segment in processor.ProcessAsync(fs))
         {
-            // Whisper.net's SegmentData exposes Start/End TimeSpan and Text;
-            // word-level timing inside Tokens is approximate but workable.
+            // Whisper.net SegmentData: Start/End are TimeSpan.
+            // Whisper.net WhisperToken: Start/End are int64 in centiseconds (10ms units).
             var words = new List<WordTiming>();
-            if (segment.Tokens is { Count: > 0 } tokens)
+            if (segment.Tokens is { Length: > 0 } tokens)
             {
                 foreach (var t in tokens)
                 {
                     if (string.IsNullOrWhiteSpace(t.Text)) continue;
                     words.Add(new WordTiming(
-                        t.Start.TotalSeconds,
-                        t.End.TotalSeconds,
+                        t.Start * 0.01,
+                        t.End * 0.01,
                         t.Text));
                 }
             }
@@ -65,8 +65,5 @@ public sealed class TranscriptionService : IAsyncDisposable
         return results;
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        if (_factory != null) await _factory.DisposeAsync();
-    }
+    public void Dispose() => _factory?.Dispose();
 }
