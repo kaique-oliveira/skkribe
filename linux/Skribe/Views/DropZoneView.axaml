@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Skribe.Views.DropZoneView">
+    <Grid Margin="24">
+        <Border Classes="card" Padding="40" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+                <TextBlock Text="📄" FontSize="40" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource PurpleBrush}" />
+                <TextBlock Text="Transcrever áudio ou vídeo" FontSize="18" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <TextBlock Text="Solte ou escolha um arquivo" FontSize="12"
+                           HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                <TextBlock Text="MP3  ·  M4A  ·  WAV  ·  FLAC  ·  MP4  ·  MOV  ·  M4V"
+                           FontSize="11" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextTertiaryBrush}"/>
+                <Button x:Name="ChooseFileButton" Classes="secondary" HorizontalAlignment="Center"
+                        Content="Escolher arquivo" Click="ChooseFile_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

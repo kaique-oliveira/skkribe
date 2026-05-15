@@ -1,0 +1,9 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Skribe.Views.ModelLoadingView">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+        <ProgressBar x:Name="LoadingBar" Width="280" Height="6" Minimum="0" Maximum="1" />
+        <TextBlock x:Name="LoadingMessage" HorizontalAlignment="Center" FontSize="13"
+                   Foreground="{DynamicResource TextSecondaryBrush}" />
+    </StackPanel>
+</UserControl>

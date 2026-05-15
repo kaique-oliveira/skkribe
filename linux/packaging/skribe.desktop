@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Skribe
+GenericName=Transcrição de áudio
+Comment=Transcrição local de áudio e vídeo com diarização — sem nuvem
+Exec=Skribe
+Icon=skribe
+Terminal=false
+Categories=AudioVideo;Audio;Utility;
+StartupWMClass=Skribe

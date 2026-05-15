@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Skribe.Views.ProcessingView">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" MaxWidth="520">
+        <TextBlock x:Name="PhaseIcon" Text="🎧" FontSize="44" HorizontalAlignment="Center" />
+        <TextBlock x:Name="PhaseLabel" HorizontalAlignment="Center" FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextPrimaryBrush}" />
+        <TextBlock x:Name="PhaseDetail" HorizontalAlignment="Center" FontSize="12"
+                   TextWrapping="Wrap" TextAlignment="Center"
+                   Foreground="{DynamicResource TextSecondaryBrush}" />
+        <TextBlock x:Name="ProgressMessage" HorizontalAlignment="Center" FontSize="11"
+                   TextWrapping="Wrap" TextAlignment="Center"
+                   Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,8,0,0" />
+        <TextBlock x:Name="ElapsedText" HorizontalAlignment="Center" FontSize="11"
+                   Foreground="{DynamicResource TextTertiaryBrush}" />
+    </StackPanel>
+</UserControl>

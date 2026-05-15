@@ -8,6 +8,7 @@ Local meeting transcription & speaker diarization. Runs entirely on-device — n
 |---|---|---|
 | [`mac/`](./mac) | Swift 6 + SwiftUI + WhisperKit + SpeakerKit (Core ML) | ✅ working |
 | [`windows/`](./windows) | C# 12 + WinUI 3 + Whisper.cpp (Whisper.net) + sherpa-onnx (PyAnnote v3) | ✅ working |
+| [`linux/`](./linux) | C# 12 + Avalonia 11 + Whisper.cpp + sherpa-onnx, AppImage | ✅ working |
 
 Both platforms share the same UX (dark theme, drop-zone or record, identical results screen with per-speaker copy) and use ML weights of the **same family** (OpenAI Whisper + PyAnnote v3).
 

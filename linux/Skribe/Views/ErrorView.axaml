@@ -1,0 +1,14 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Skribe.Views.ErrorView">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" MaxWidth="500">
+        <TextBlock Text="⚠" FontSize="44" HorizontalAlignment="Center"
+                   Foreground="{DynamicResource RedBrush}" />
+        <TextBlock Text="Algo deu errado" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center"
+                   Foreground="{DynamicResource TextPrimaryBrush}" />
+        <TextBlock x:Name="ErrorMessage" FontSize="13" TextWrapping="Wrap" TextAlignment="Center"
+                   Foreground="{DynamicResource TextSecondaryBrush}" />
+        <Button x:Name="ResetButton" Classes="secondary" Content="Tentar de novo"
+                HorizontalAlignment="Center" Click="Reset_Click" />
+    </StackPanel>
+</UserControl>
