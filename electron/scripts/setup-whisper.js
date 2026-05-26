@@ -77,10 +77,21 @@ function main() {
   run(`cmake -B "${BUILD_DIR}/build" -S "${BUILD_DIR}" ${flags}`)
   run(`cmake --build "${BUILD_DIR}/build" --config Release --target whisper-cli -j`)
 
-  const srcBin = path.join(BUILD_DIR, 'build', 'bin', process.platform === 'win32' ? 'whisper-cli.exe' : 'whisper-cli')
+  // Multi-config generators (Visual Studio on Windows) place the binary in
+  // build/bin/Release/, while single-config generators (Makefiles, Ninja on
+  // Mac/Linux) put it directly in build/bin/. Try both.
+  const binName = process.platform === 'win32' ? 'whisper-cli.exe' : 'whisper-cli'
+  const candidates = [
+    path.join(BUILD_DIR, 'build', 'bin', 'Release', binName),
+    path.join(BUILD_DIR, 'build', 'bin', binName),
+  ]
+  const srcBin = candidates.find((p) => fs.existsSync(p))
+  if (!srcBin) {
+    throw new Error(`whisper-cli não foi encontrado em nenhum dos caminhos esperados:\n${candidates.join('\n')}`)
+  }
   const dstBin = path.join(RES, process.platform === 'win32' ? 'main.exe' : 'main')
   fs.copyFileSync(srcBin, dstBin)
-  fs.chmodSync(dstBin, 0o755)
+  if (process.platform !== 'win32') fs.chmodSync(dstBin, 0o755)
 
   fs.writeFileSync(VERSION_MARKER, WHISPER_TAG)
   console.log('\n✅ whisper.cpp pronto em', dstBin)
