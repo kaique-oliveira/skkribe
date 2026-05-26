@@ -90,19 +90,28 @@ function findSystemPython(app) {
   return null
 }
 
+// Schema version of the python venv layout. Bump when changing the pinned
+// pyannote.audio version or the HF API kwargs — a mismatch triggers a venv
+// rebuild instead of leaving the user with an obscure Python TypeError.
+const VENV_SCHEMA = '1'
+
 // ── Granular readiness check ─────────────────────────────────────────────────
 function checkSetup(app) {
   const p = paths(app)
   const hasModel = fs.existsSync(p.modelsDir) && fs.readdirSync(p.modelsDir).some(
     f => f.startsWith('ggml-large-v3') && fs.statSync(path.join(p.modelsDir, f)).size >= MIN_MODEL_BYTES
   )
+  const schemaFile = path.join(p.venvDir, '.skribe-venv-schema')
+  const venvOk = fs.existsSync(p.venvPython)
+              && fs.existsSync(schemaFile)
+              && fs.readFileSync(schemaFile, 'utf8').trim() === VENV_SCHEMA
   const checks = {
     whisperBin:      fs.existsSync(p.whisperBin),
     vadModel:        fs.existsSync(p.vadModel),
     diarizeScript:   fs.existsSync(p.diarizeScript),
     whisperModel:    hasModel,
-    pyannoteVenv:    fs.existsSync(p.venvPython),
-    pyannoteWeights: fs.existsSync(p.setupMarker),
+    pyannoteVenv:    venvOk,
+    pyannoteWeights: fs.existsSync(p.setupMarker) && venvOk,
   }
   return { ready: Object.values(checks).every(Boolean), checks, paths: p }
 }
@@ -203,6 +212,16 @@ async function runSetup(app, emit) {
 
   // ── Phase 2: Python venv + torch + pyannote.audio ──────────────────────────
   if (!checks.pyannoteVenv) {
+    // If a venv directory exists but failed the schema check, it was built
+    // by a previous version with incompatible Python deps — nuke it so the
+    // fresh install lands on the current pinned pyannote.audio.
+    if (fs.existsSync(p.venvDir)) {
+      emit({ phase: 'venv', label: 'Removendo ambiente Python antigo…', percent: 0 })
+      fs.rmSync(p.venvDir, { recursive: true, force: true })
+      // Force a re-download of pyannote weights too — they may have been
+      // produced by an older incompatible HF cache layout.
+      try { fs.rmSync(p.setupMarker, { force: true }) } catch (_) {}
+    }
     emit({ phase: 'venv', label: 'Criando ambiente Python isolado…', percent: 0 })
     const sysPy = findSystemPython(app)
     if (!sysPy) {
@@ -224,11 +243,19 @@ async function runSetup(app, emit) {
     )
 
     emit({ phase: 'venv', label: 'Instalando pyannote.audio (~500 MB)…', percent: 0.7 })
+    // Pin >=3.3.0 — earlier 3.x versions forwarded `use_auth_token` directly
+    // to huggingface_hub.hf_hub_download(), which the modern huggingface_hub
+    // (>=0.20) renamed to `token` and made strict. pyannote.audio 3.3+ uses
+    // the modern `token=` kwarg internally.
     await runProcess(
       p.venvPip,
-      ['install', 'pyannote.audio', '--quiet'],
+      ['install', 'pyannote.audio>=3.3', '--quiet'],
       (l) => emit({ phase: 'venv', label: l.slice(0, 80), percent: 0.9 })
     )
+
+    // Write a schema-version marker so a future API break can re-create the
+    // venv automatically instead of confusing the user with kwarg TypeErrors.
+    fs.writeFileSync(path.join(p.venvDir, '.skribe-venv-schema'), '1', 'utf8')
   }
 
   // ── Phase 3: pyannote model weights ────────────────────────────────────────
@@ -241,7 +268,7 @@ async function runSetup(app, emit) {
       'import os, sys',
       `os.environ["HF_HOME"] = ${JSON.stringify(p.hfCache)}`,
       'from pyannote.audio import Pipeline',
-      'Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=sys.argv[1])',
+      'Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", token=sys.argv[1])',
       'print("OK")',
     ].join('\n'))
 

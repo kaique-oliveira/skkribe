@@ -211,7 +211,7 @@ def main():
         result({"error": f"pyannote.audio não instalado: {e}"}); sys.exit(1)
 
     try:
-        pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=hf_token)
+        pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", token=hf_token)
         if torch.backends.mps.is_available():
             progress("Usando MPS (GPU Apple Silicon)")
             pipeline = pipeline.to(torch.device("mps"))
