@@ -16,6 +16,9 @@
     "setup:model": "node scripts/download-model.js",
     "setup:all": "npm run setup:whisper && echo '\\n→ Now run: npm run setup:diarization -- --token=hf_…\\n  and:    npm run setup:model'"
   },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0"
+  },
   "devDependencies": {
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
@@ -26,7 +29,8 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "electron",
-      "electron-builder"
+      "electron-builder",
+      "ffmpeg-static"
     ]
   },
   "build": {
@@ -38,6 +42,9 @@
       "src/renderer/dist/**/*",
       "!**/node_modules/**/test/**",
       "!**/.cache/**"
+    ],
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/ffmpeg*"
     ],
     "extraResources": [
       {

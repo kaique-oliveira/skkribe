@@ -14,6 +14,20 @@ const os = require('os')
 const { spawn } = require('child_process')
 const runtimeSetup = require('./runtime-setup')
 
+// Bundled static ffmpeg binary. When the .app is launched from Finder it
+// inherits a minimal PATH that doesn't include /opt/homebrew/bin, so a bare
+// `ffmpeg` spawn ENOENTs. ffmpeg-static ships the binary in node_modules and
+// returns its absolute path — works in both dev and packaged mode.
+const FFMPEG_PATH = (() => {
+  const p = require('ffmpeg-static')
+  if (!app.isPackaged) return p
+  // In a packaged build, electron-builder relocates node_modules under
+  // app.asar.unpacked because the binary can't be loaded from inside an asar.
+  // ffmpeg-static@5 sets `binary: { unpack: true }` so this rewrite is usually
+  // automatic, but stay defensive in case it isn't.
+  return p.replace('app.asar', 'app.asar.unpacked')
+})()
+
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
 // Pipeline constants. Quality-over-speed defaults baked in — the user no longer
@@ -31,7 +45,7 @@ const PIPELINE = Object.freeze({
 /** Convert any input into 16 kHz mono PCM WAV — the shape whisper + pyannote want. */
 function convertToWav(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
-    const ff = spawn('ffmpeg', [
+    const ff = spawn(FFMPEG_PATH, [
       '-y', '-i', inputPath,
       '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le',
       outputPath,
@@ -51,7 +65,7 @@ function convertToWav(inputPath, outputPath) {
 function splitWavIntoChunks(wavPath, destDir, chunkSeconds) {
   return new Promise((resolve, reject) => {
     const pattern = path.join(destDir, 'chunk_%03d.wav')
-    const ff = spawn('ffmpeg', [
+    const ff = spawn(FFMPEG_PATH, [
       '-y', '-i', wavPath,
       '-f', 'segment',
       '-segment_time', String(chunkSeconds),
