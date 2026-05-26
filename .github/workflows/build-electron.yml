@@ -30,12 +30,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14        # arm64 dmg/zip
-            artifact: skribe-mac
+          # macOS is built locally on the maintainer's M-series Mac via
+          # `pnpm run build:mac` — no CI cost. Linux is disabled for now;
+          # re-enable by uncommenting the entry below once the Windows
+          # build is validated.
           - os: windows-latest  # win-x64 NSIS installer
             artifact: skribe-win
-          - os: ubuntu-22.04    # AppImage
-            artifact: skribe-linux
+          # - os: macos-14        # arm64 dmg/zip
+          #   artifact: skribe-mac
+          # - os: ubuntu-22.04    # AppImage
+          #   artifact: skribe-linux
 
     runs-on: ${{ matrix.os }}
     defaults:
