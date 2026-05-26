@@ -1,6 +1,6 @@
-// Skribe — Electron main process.
+// Skkribe — Electron main process.
 //
-// Backend strategy proven by the original Skribe electron build:
+// Backend strategy proven by the original Skkribe electron build:
 //   ffmpeg → split into N-second chunks → whisper.cpp transcribes chunks in
 //   PARALLEL (multiple processes) → combine segments → pyannote.audio
 //   diarizes the WHOLE WAV → segment-level speaker assignment via max overlap.
@@ -336,8 +336,8 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
   const maxWorkers = Math.max(1, Math.min(Math.floor(os.cpus().length / 2), 6))
 
   const ts = Date.now()
-  const tmpDir = path.join(os.tmpdir(), `skribe_${ts}`)
-  const tmpWav = path.join(os.tmpdir(), `skribe_${ts}.wav`)
+  const tmpDir = path.join(os.tmpdir(), `skkribe_${ts}`)
+  const tmpWav = path.join(os.tmpdir(), `skkribe_${ts}.wav`)
   fs.mkdirSync(tmpDir, { recursive: true })
 
   const cleanup = () => {
@@ -387,7 +387,7 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
     //    inside diarize.py — much more accurate than the old segment-level
     //    matching when whisper segments straddle real speaker changes.
     send({ phase: 'diarizing', message: 'pyannote: identificando vozes…' })
-    const segJson = path.join(os.tmpdir(), `skribe_segs_${ts}.json`)
+    const segJson = path.join(os.tmpdir(), `skkribe_segs_${ts}.json`)
     fs.writeFileSync(segJson, JSON.stringify({
       transcription: whisperSegments.map(s => ({
         offsets: { from: Math.round(s.start * 1000), to: Math.round(s.end * 1000) },

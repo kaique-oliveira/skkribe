@@ -9,7 +9,7 @@ export function DropZone({ onFileSelected }) {
   const [dragging, setDragging] = useState(false)
 
   async function choose() {
-    const filePath = await window.skribe.openAudioDialog()
+    const filePath = await window.skkribe.openAudioDialog()
     if (filePath) onFileSelected(filePath)
   }
 

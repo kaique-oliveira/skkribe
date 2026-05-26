@@ -26,7 +26,7 @@ export function ModelLoading({ message, progress = 0.2 }) {
 
       <PopIn delay={0.05}>
         <div className="text-center space-y-1.5">
-          <h1 className="text-[22px] font-bold text-ink-1">Preparando o Skribe</h1>
+          <h1 className="text-[22px] font-bold text-ink-1">Preparando o Skkribe</h1>
           <p className="text-[13px] text-ink-2">{message}</p>
         </div>
       </PopIn>

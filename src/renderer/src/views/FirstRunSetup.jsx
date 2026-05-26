@@ -24,7 +24,7 @@ export function FirstRunSetup({ onComplete, onFail }) {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const off = window.skribe.onSetupProgress((p) => {
+    const off = window.skkribe.onSetupProgress((p) => {
       if (!p) return
       if (p.phase === 'error') {
         setError(p.label || 'Falha desconhecida')
@@ -36,7 +36,7 @@ export function FirstRunSetup({ onComplete, onFail }) {
     })
 
     ;(async () => {
-      const res = await window.skribe.runSetup()
+      const res = await window.skkribe.runSetup()
       off()
       if (res?.ok) onComplete?.()
       else { setError(res?.error || 'Falha na configuração'); onFail?.(res?.error) }
@@ -108,7 +108,7 @@ export function FirstRunSetup({ onComplete, onFail }) {
 
       <PopIn delay={0.05}>
         <div className="text-center space-y-1.5">
-          <h1 className="text-[22px] font-bold text-ink-1">Configurando Skribe</h1>
+          <h1 className="text-[22px] font-bold text-ink-1">Configurando Skkribe</h1>
           <p className="text-[13px] text-ink-2">Só na primeira vez — depois fica salvo.</p>
         </div>
       </PopIn>

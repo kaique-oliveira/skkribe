@@ -121,7 +121,7 @@ function downloadFile(url, dest) {
     const out = fs.createWriteStream(tmp)
     function follow(currentUrl, hops = 0) {
       if (hops > 5) return reject(new Error(`muitos redirects em ${currentUrl}`))
-      const req = https.get(currentUrl, { headers: { 'user-agent': 'skribe-setup' } }, (res) => {
+      const req = https.get(currentUrl, { headers: { 'user-agent': 'skkribe-setup' } }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           res.resume()
           return follow(new URL(res.headers.location, currentUrl).toString(), hops + 1)

@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-// Tokens mirror /mac/Skribe/Skribe/Theme/Theme.swift — keep in sync when either side moves.
+// Tokens mirror /mac/Skkribe/Skkribe/Theme/Theme.swift — keep in sync when either side moves.
 export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
@@ -42,7 +42,7 @@ export default {
         floating: '0 8px 24px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.05)',
       },
       fontFamily: {
-        // Skribe uses the system stack. Bold weights come from -apple-system on Mac
+        // Skkribe uses the system stack. Bold weights come from -apple-system on Mac
         // and Segoe UI on Win. Falls back to a generic stack on Linux.
         sans: [
           '-apple-system', 'BlinkMacSystemFont', 'Segoe UI',

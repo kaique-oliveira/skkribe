@@ -2,21 +2,33 @@
 .DS_Store
 Thumbs.db
 
-# Claude Code working dir
+# Per-machine local working dir
 .claude/
 
-# macOS / Xcode
-mac/Skribe/build/
-mac/Skribe/build.log
-mac/Skribe/*.pkg
-mac/Skribe/**/xcuserdata/
-mac/Skribe/**/*.xcuserstate
+# Dependencies
+node_modules/
+src/renderer/node_modules/
+src/renderer/dist/
 
-# .NET / WinUI 3
-windows/**/bin/
-windows/**/obj/
-windows/**/AppPackages/
-windows/**/BundleArtifacts/
-windows/**/*.user
-windows/**/.vs/
-windows/**/Generated Files/
+# Whisper.cpp source clone + cmake artifacts (regenerable)
+.cache/
+
+# Icons sandbox (intermediate, regenerable)
+build/icon.iconset/
+
+# whisper.cpp binaries (built per platform)
+resources/whisper/main
+resources/whisper/main.exe
+resources/whisper/.whisper-version
+resources/whisper/models/*.bin
+resources/whisper/ggml-silero-v5.1.2.bin
+
+# Runtime-generated Python venv + caches
+resources/python/venv/
+resources/python/hf_cache/
+resources/python/runtime/
+resources/python/.diarization-config.json
+resources/perf-config.json
+
+# electron-builder output
+dist/

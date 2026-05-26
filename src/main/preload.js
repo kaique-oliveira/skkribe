@@ -1,9 +1,9 @@
-// Preload — exposes a small typed-ish surface to the renderer via window.skribe.
+// Preload — exposes a small typed-ish surface to the renderer via window.skkribe.
 // Anything beyond this set is unreachable from the renderer's React code.
 
 const { contextBridge, ipcRenderer } = require('electron')
 
-contextBridge.exposeInMainWorld('skribe', {
+contextBridge.exposeInMainWorld('skkribe', {
   // first-run setup
   checkSetup: () => ipcRenderer.invoke('setup:check'),
   runSetup: () => ipcRenderer.invoke('setup:run'),

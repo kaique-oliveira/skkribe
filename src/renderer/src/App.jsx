@@ -21,7 +21,7 @@ export function App() {
       try {
         s.setStatusMessage('Verificando configuração…')
         s.setLoadingProgress(0.5)
-        const setup = await window.skribe.checkSetup()
+        const setup = await window.skkribe.checkSetup()
         if (cancelled) return
         if (!setup.ready) {
           s.setStatus(STATUS.firstRun)
@@ -42,7 +42,7 @@ export function App() {
     s.startProcessing({ filePath, monologue: expectedSpeakers === 1 })
 
     // Listen to progress events for the lifetime of this transcription.
-    const off = window.skribe.onProgress((payload) => {
+    const off = window.skkribe.onProgress((payload) => {
       if (payload?.phase) {
         const phase = PHASES[payload.phase]
         if (phase) s.setCurrentPhase(phase)
@@ -51,7 +51,7 @@ export function App() {
     })
 
     try {
-      const { fileName, segments } = await window.skribe.transcribe(filePath, expectedSpeakers)
+      const { fileName, segments } = await window.skkribe.transcribe(filePath, expectedSpeakers)
       s.finishProcessing({ fileName, segments })
     } catch (err) {
       const msg = err?.message || String(err)

@@ -2,7 +2,7 @@
 /**
  * setup-diarization.js — sets up an isolated Python venv with pyannote.audio
  * + PyTorch CPU and pre-downloads the pyannote/speaker-diarization-3.1 model
- * weights. Same architecture as the original Skribe-electron build.
+ * weights. Same architecture as the original Skkribe-electron build.
  *
  * Run: npm run setup:diarization -- --token=hf_xxxxxxxxxxxx
  *
@@ -308,7 +308,7 @@ function main() {
     console.error('   Uso: npm run setup:diarization -- --token=hf_xxxxxxxx')
     process.exit(1)
   }
-  // Catch the most common mistake: pasting an OpenAI/Anthropic-style key (sk_…)
+  // Catch the most common mistake: pasting a non-HF style key (sk_…)
   // or a personal API key from somewhere else. HuggingFace tokens always start
   // with `hf_`. Failing fast here saves a 2 GB torch download + venv build for
   // nothing.

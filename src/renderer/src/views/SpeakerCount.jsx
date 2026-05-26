@@ -28,7 +28,7 @@ export function SpeakerCount({ fileName, onConfirm, onCancel }) {
       <PopIn delay={0.05}>
         <div className="text-center mt-[18px] space-y-1.5 px-2">
           <h1 className="text-[22px] font-bold text-ink-1 leading-tight">Quantas pessoas falam?</h1>
-          <p className="text-[13px] text-ink-2">Ajuda o Skribe a separar melhor as vozes. Se não souber, deixa no automático.</p>
+          <p className="text-[13px] text-ink-2">Ajuda o Skkribe a separar melhor as vozes. Se não souber, deixa no automático.</p>
         </div>
       </PopIn>
 

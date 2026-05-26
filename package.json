@@ -1,7 +1,7 @@
 {
-  "name": "skribe-electron",
+  "name": "skkribe-electron",
   "version": "1.0.0",
-  "description": "Skribe — local transcription + diarization with whisper.cpp + pyannote.audio. UI parity with the Mac native port.",
+  "description": "Skkribe — local transcription + diarization with whisper.cpp + pyannote.audio. UI parity with the Mac native port.",
   "main": "src/main/index.js",
   "scripts": {
     "dev": "concurrently \"npm:dev:renderer\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
@@ -34,8 +34,8 @@
     ]
   },
   "build": {
-    "appId": "com.kah.skribe",
-    "productName": "Skribe",
+    "appId": "com.kah.skkribe",
+    "productName": "Skkribe",
     "directories": { "buildResources": "build", "output": "dist" },
     "files": [
       "src/main/**/*",

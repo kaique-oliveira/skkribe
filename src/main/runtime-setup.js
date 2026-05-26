@@ -101,7 +101,7 @@ function checkSetup(app) {
   const hasModel = fs.existsSync(p.modelsDir) && fs.readdirSync(p.modelsDir).some(
     f => f.startsWith('ggml-large-v3') && fs.statSync(path.join(p.modelsDir, f)).size >= MIN_MODEL_BYTES
   )
-  const schemaFile = path.join(p.venvDir, '.skribe-venv-schema')
+  const schemaFile = path.join(p.venvDir, '.skkribe-venv-schema')
   const venvOk = fs.existsSync(p.venvPython)
               && fs.existsSync(schemaFile)
               && fs.readFileSync(schemaFile, 'utf8').trim() === VENV_SCHEMA
@@ -127,7 +127,7 @@ function downloadFile(url, dest, label, onProgress) {
 
     function follow(currentUrl, hops = 0) {
       if (hops > 5) return reject(new Error(`muitos redirects em ${currentUrl}`))
-      const req = https.get(currentUrl, { headers: { 'user-agent': 'skribe-electron' } }, (res) => {
+      const req = https.get(currentUrl, { headers: { 'user-agent': 'skkribe-electron' } }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           res.resume()
           return follow(new URL(res.headers.location, currentUrl).toString(), hops + 1)
@@ -260,7 +260,7 @@ async function runSetup(app, emit) {
 
     // Write a schema-version marker so a future API break can re-create the
     // venv automatically instead of confusing the user with kwarg TypeErrors.
-    fs.writeFileSync(path.join(p.venvDir, '.skribe-venv-schema'), VENV_SCHEMA, 'utf8')
+    fs.writeFileSync(path.join(p.venvDir, '.skkribe-venv-schema'), VENV_SCHEMA, 'utf8')
   }
 
   // ── Phase 3: pyannote model weights ────────────────────────────────────────
@@ -268,7 +268,7 @@ async function runSetup(app, emit) {
     emit({ phase: 'weights', label: 'Baixando pesos do pyannote.audio (~100 MB)…', percent: 0 })
     fs.mkdirSync(p.hfCache, { recursive: true })
 
-    const downloadScript = path.join(os.tmpdir(), `skribe_pyannote_dl_${Date.now()}.py`)
+    const downloadScript = path.join(os.tmpdir(), `skkribe_pyannote_dl_${Date.now()}.py`)
     fs.writeFileSync(downloadScript, [
       'import os, sys',
       `os.environ["HF_HOME"] = ${JSON.stringify(p.hfCache)}`,

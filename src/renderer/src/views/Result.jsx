@@ -86,7 +86,7 @@ export function Result({
       lines.push(`\`${formatTimestamp(s.start)}\` ${s.text}`)
     }
     const base = fileName.replace(/\.[^.]+$/, '')
-    const written = await window.skribe.saveMarkdown(base, lines.join('\n'))
+    const written = await window.skkribe.saveMarkdown(base, lines.join('\n'))
     if (written) {
       setMdSaved(true)
       setTimeout(() => setMdSaved(false), 2000)

@@ -1,6 +1,6 @@
-name: Build Electron (Skribe)
+name: Build Electron (Skkribe)
 
-# Cross-platform build of the Electron port.
+# Cross-platform build of the Skkribe Electron app.
 #
 # Bundled into the installer (per OS) by this workflow:
 #   • whisper.cpp binary (built from source via cmake, Metal-enabled on mac)
@@ -10,19 +10,19 @@ name: Build Electron (Skribe)
 #     the system python3
 #
 # Downloaded at first launch by the packaged app (runtime-setup.js):
-#   • ggml-large-v3-q5_0.bin   ~2.0 GB
+#   • ggml-large-v3-q5_0.bin   ~1.08 GB
 #   • Python venv + torch CPU + pyannote.audio  ~1.5 GB
 #   • pyannote diarization weights              ~100 MB
 #
 # Triggers:
 #   workflow_dispatch — run from the Actions tab.
-#   push tags 'electron-v*' — cuts a Release.
+#   push tags 'skkribe-v*' — cuts a Release.
 
 on:
   workflow_dispatch:
   push:
     tags:
-      - 'electron-v*'
+      - 'skkribe-v*'
 
 jobs:
   build:
@@ -35,16 +35,13 @@ jobs:
           # re-enable by uncommenting the entry below once the Windows
           # build is validated.
           - os: windows-latest  # win-x64 NSIS installer
-            artifact: skribe-win
+            artifact: skkribe-win
           # - os: macos-14        # arm64 dmg/zip
-          #   artifact: skribe-mac
+          #   artifact: skkribe-mac
           # - os: ubuntu-22.04    # AppImage
-          #   artifact: skribe-linux
+          #   artifact: skkribe-linux
 
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: electron
 
     steps:
       - uses: actions/checkout@v4
@@ -59,8 +56,8 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
           cache-dependency-path: |
-            electron/pnpm-lock.yaml
-            electron/src/renderer/pnpm-lock.yaml
+            pnpm-lock.yaml
+            src/renderer/pnpm-lock.yaml
 
       # ── Toolchains for whisper.cpp build ─────────────────────────────────
       - name: Install cmake (Linux)
@@ -74,11 +71,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install renderer deps
-        working-directory: electron/src/renderer
+        working-directory: src/renderer
         run: pnpm install --frozen-lockfile
 
       - name: Build renderer (Vite)
-        working-directory: electron/src/renderer
+        working-directory: src/renderer
         run: pnpm run build
 
       # ── Build whisper.cpp + drop Silero VAD into resources/whisper/ ──────
@@ -118,9 +115,9 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: |
-            electron/dist/*.dmg
-            electron/dist/*.zip
-            electron/dist/*.exe
-            electron/dist/*.AppImage
+            dist/*.dmg
+            dist/*.zip
+            dist/*.exe
+            dist/*.AppImage
           if-no-files-found: ignore
           retention-days: 14
