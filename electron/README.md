@@ -78,7 +78,7 @@ Bundlado por OS (~150-200 MB):
 
 Baixado automaticamente no primeiro launch (~3,5 GB):
 
-- `ggml-large-v3-q5_0.bin` (~2,0 GB) — do HuggingFace
+- `ggml-large-v3-q5_0.bin` (~1,08 GB) — do HuggingFace
 - `python/venv` com torch CPU + pyannote.audio (~1,5 GB) — via pip
 - pesos do pyannote (~100 MB) — do HuggingFace usando o token embutido
 

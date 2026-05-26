@@ -13,7 +13,7 @@
 //   userBase()     — writable, lives in app.getPath('userData'). The runtime
 //                    setup writes here so the installed app stays signable +
 //                    untouched:
-//                      • models/ggml-large-v3-q5_0.bin    ~2.0 GB
+//                      • models/ggml-large-v3-q5_0.bin    ~1.08 GB
 //                      • python-venv/                     created at first run
 //                      • hf-cache/                        pyannote weights
 //
@@ -35,7 +35,9 @@ const HF_TOKEN = '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'
 
 const WHISPER_MODEL_FILE = 'ggml-large-v3-q5_0.bin'
 const WHISPER_MODEL_URL  = `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${WHISPER_MODEL_FILE}`
-const MIN_MODEL_BYTES    = 1_500 * 1024 * 1024   // ~1.5 GB sanity floor — large-v3 q5_0 is ~2.0 GB
+// large-v3 q5_0 is ~1.08 GB on disk. Set the sanity floor below that so a
+// completed download passes, but above any obviously-truncated partial.
+const MIN_MODEL_BYTES    = 900 * 1024 * 1024   // ~900 MB
 
 const WHISPER_BIN_NAME = process.platform === 'win32' ? 'main.exe' : 'main'
 
@@ -182,7 +184,7 @@ async function runSetup(app, emit) {
 
   // ── Phase 1: whisper model ─────────────────────────────────────────────────
   if (!checks.whisperModel) {
-    emit({ phase: 'model', label: 'Baixando o melhor modelo (large-v3, ~2 GB)…', percent: 0 })
+    emit({ phase: 'model', label: 'Baixando o melhor modelo (large-v3, ~1 GB)…', percent: 0 })
     await downloadFile(WHISPER_MODEL_URL, p.whisperModel, 'model', (pr) => {
       const mb = (n) => (n / 1e6).toFixed(0)
       emit({

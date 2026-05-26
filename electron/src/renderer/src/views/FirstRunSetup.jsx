@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { PopIn } from '../components/PopIn'
 import { StatusPill } from '../components/StatusPill'
 
-// First-launch auto-setup: downloads the whisper model (~2 GB), creates the
+// First-launch auto-setup: downloads the whisper model (~1 GB), creates the
 // Python venv, installs torch + pyannote, and pre-caches the diarization
 // weights. Runs unattended — the user just sees progress and waits.
 //
 // Phases mirror runtime-setup.js → emit({ phase, label, percent }).
 const PHASE_META = {
-  model:   { title: 'Modelo de transcrição',     hint: 'Baixando o melhor modelo (large-v3, ~2 GB).' },
+  model:   { title: 'Modelo de transcrição',     hint: 'Baixando o melhor modelo (large-v3, ~1 GB).' },
   venv:    { title: 'Ambiente Python',           hint: 'Criando ambiente isolado e instalando pyannote.audio + PyTorch.' },
   weights: { title: 'Pesos de identificação',    hint: 'Baixando o modelo que reconhece quem está falando.' },
   done:    { title: 'Pronto!',                   hint: 'Configuração concluída.' },
@@ -145,7 +145,7 @@ export function FirstRunSetup({ onComplete, onFail }) {
       </PopIn>
 
       <PopIn delay={0.15}>
-        <p className="text-[11px] text-ink-3 text-center">Download total: ~3,5 GB.<br/>Tempo estimado: 5-15 min dependendo da sua conexão.</p>
+        <p className="text-[11px] text-ink-3 text-center">Download total: ~2,7 GB.<br/>Tempo estimado: 5-15 min dependendo da sua conexão.</p>
       </PopIn>
     </div>
   )
