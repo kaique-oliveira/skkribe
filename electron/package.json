@@ -1,0 +1,86 @@
+{
+  "name": "skribe-electron",
+  "version": "1.0.0",
+  "description": "Skribe — local transcription + diarization with whisper.cpp + pyannote.audio. UI parity with the Mac native port.",
+  "main": "src/main/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm:dev:renderer\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "dev:renderer": "npm --prefix src/renderer run dev",
+    "build:renderer": "npm --prefix src/renderer run build",
+    "build": "npm run build:renderer && electron-builder --mac --win --linux",
+    "build:mac": "npm run build:renderer && electron-builder --mac",
+    "build:win": "npm run build:renderer && electron-builder --win",
+    "build:linux": "npm run build:renderer && electron-builder --linux",
+    "setup:whisper": "node scripts/setup-whisper.js",
+    "setup:diarization": "node scripts/setup-diarization.js",
+    "setup:model": "node scripts/download-model.js",
+    "setup:all": "npm run setup:whisper && echo '\\n→ Now run: npm run setup:diarization -- --token=hf_…\\n  and:    npm run setup:model'"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "wait-on": "^7.2.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "electron-builder"
+    ],
+    "ignoredBuiltDependencies": [
+      "electron"
+    ]
+  },
+  "build": {
+    "appId": "com.kah.skribe",
+    "productName": "Skribe",
+    "directories": { "buildResources": "build", "output": "dist" },
+    "files": [
+      "src/main/**/*",
+      "src/renderer/dist/**/*",
+      "!**/node_modules/**/test/**",
+      "!**/.cache/**"
+    ],
+    "extraResources": [
+      {
+        "from": "resources",
+        "to": "resources",
+        "filter": [
+          "**/*",
+          "!**/.DS_Store",
+          "!**/__pycache__/**",
+          "!python/_download.py",
+          "!python/venv/**",
+          "!python/hf_cache/**",
+          "!python/.diarization-config.json",
+          "!whisper/models/**"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        { "target": "dmg", "arch": ["arm64"] },
+        { "target": "zip", "arch": ["arm64"] }
+      ],
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "category": "AudioVideo",
+      "target": [{ "target": "AppImage", "arch": ["x64"] }]
+    }
+  }
+}

@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    background: theme('colors.bg');
+    color: theme('colors.ink.1');
+    font-family: theme('fontFamily.sans');
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Hide the macOS scrollbar from view; macOS hides the scrollbar entirely
+       until scrolling on most apps with this default. */
+    overflow: hidden;
+  }
+
+  /* Disable the focus ring that Electron/Chrome paint on any focusable
+     element — we get the same calm "no chrome" feel as the SwiftUI app. */
+  *:focus { outline: none; }
+  button { -webkit-app-region: no-drag; }
+}
+
+@layer utilities {
+  /* The traffic-light area at the top is the draggable handle in our
+     hiddenTitleBar window. Anything inside `.drag-region` lets the user
+     reposition the window. */
+  .drag-region { -webkit-app-region: drag; }
+  .no-drag     { -webkit-app-region: no-drag; }
+
+  /* `tabular-nums` is already a Tailwind class — exposed here so the import
+     surface matches what the Swift code calls it. */
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+}

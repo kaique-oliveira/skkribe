@@ -1,0 +1,115 @@
+name: Build Electron (Skribe)
+
+# Cross-platform build of the Electron port.
+#
+# Bundled into the installer (per OS) by this workflow:
+#   • whisper.cpp binary (built from source via cmake, Metal-enabled on mac)
+#   • Silero VAD model (~864 KB)
+#   • diarize.py (committed in resources/python/diarize.py)
+#   • python-build-standalone runtime (Windows only, ~25 MB) — Mac/Linux use
+#     the system python3
+#
+# Downloaded at first launch by the packaged app (runtime-setup.js):
+#   • ggml-large-v3-q5_0.bin   ~2.0 GB
+#   • Python venv + torch CPU + pyannote.audio  ~1.5 GB
+#   • pyannote diarization weights              ~100 MB
+#
+# Triggers:
+#   workflow_dispatch — run from the Actions tab.
+#   push tags 'electron-v*' — cuts a Release.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'electron-v*'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14        # arm64 dmg/zip
+            artifact: skribe-mac
+          - os: windows-latest  # win-x64 NSIS installer
+            artifact: skribe-win
+          - os: ubuntu-22.04    # AppImage
+            artifact: skribe-linux
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: electron
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            electron/package-lock.json
+            electron/src/renderer/package-lock.json
+
+      # ── Toolchains for whisper.cpp build ─────────────────────────────────
+      - name: Install cmake (Linux)
+        if: matrix.os == 'ubuntu-22.04'
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential
+
+      # macOS-14 runner ships with cmake + clang. windows-latest ships with
+      # MSVC + cmake via the "Build Tools" preinstall. No-op on both.
+
+      - name: Install root deps
+        run: npm install --no-audit --no-fund
+
+      - name: Install renderer deps
+        run: npm --prefix src/renderer install --no-audit --no-fund
+
+      - name: Build renderer (Vite)
+        run: npm run build:renderer
+
+      # ── Build whisper.cpp + drop Silero VAD into resources/whisper/ ──────
+      - name: Build whisper.cpp (per platform)
+        run: npm run setup:whisper
+
+      # ── Windows-only: bundle a portable Python 3.11 with venv module ─────
+      # python-build-standalone provides a fully-functional Python (unlike the
+      # "embeddable" zip from python.org, which is stripped of venv + pip).
+      - name: Download portable Python (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          mkdir -p resources/python/runtime
+          curl -L -o python.tar.gz https://github.com/indygreg/python-build-standalone/releases/download/20240814/cpython-3.11.10+20240814-x86_64-pc-windows-msvc-shared-install_only.tar.gz
+          tar xzf python.tar.gz -C resources/python/runtime --strip-components=1
+          rm python.tar.gz
+          ls resources/python/runtime/python.exe
+
+      # ── electron-builder packages everything in resources/ via extraResources
+      - name: Package — macOS
+        if: matrix.os == 'macos-14'
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false   # don't try to code-sign in CI
+        run: npx electron-builder --mac --publish never
+
+      - name: Package — Windows
+        if: matrix.os == 'windows-latest'
+        run: npx electron-builder --win --publish never
+
+      - name: Package — Linux
+        if: matrix.os == 'ubuntu-22.04'
+        run: npx electron-builder --linux --publish never
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            electron/dist/*.dmg
+            electron/dist/*.zip
+            electron/dist/*.exe
+            electron/dist/*.AppImage
+          if-no-files-found: ignore
+          retention-days: 14

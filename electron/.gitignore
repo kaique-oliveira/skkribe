@@ -1,0 +1,20 @@
+node_modules/
+src/renderer/node_modules/
+src/renderer/dist/
+# Whisper.cpp source clone + cmake artifacts — not packaged, regenerable.
+.cache/
+# build/ holds the app icons (committed); we only ignore strays.
+build/icon.iconset/
+resources/whisper/main
+resources/whisper/main.exe
+resources/whisper/.whisper-version
+resources/whisper/models/*.bin
+resources/whisper/ggml-silero-v5.1.2.bin
+resources/python/venv/
+resources/python/hf_cache/
+resources/python/runtime/
+resources/python/.diarization-config.json
+resources/perf-config.json
+# electron-builder output (.dmg, .exe, .AppImage)
+dist/
+.DS_Store
