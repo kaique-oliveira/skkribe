@@ -27,9 +27,6 @@
     "onlyBuiltDependencies": [
       "electron",
       "electron-builder"
-    ],
-    "ignoredBuiltDependencies": [
-      "electron"
     ]
   },
   "build": {
