@@ -93,7 +93,7 @@ function findSystemPython(app) {
 // Schema version of the python venv layout. Bump when changing the pinned
 // pyannote.audio version or the HF API kwargs — a mismatch triggers a venv
 // rebuild instead of leaving the user with an obscure Python TypeError.
-const VENV_SCHEMA = '1'
+const VENV_SCHEMA = '2'
 
 // ── Granular readiness check ─────────────────────────────────────────────────
 function checkSetup(app) {
@@ -243,13 +243,14 @@ async function runSetup(app, emit) {
     )
 
     emit({ phase: 'venv', label: 'Instalando pyannote.audio (~500 MB)…', percent: 0.7 })
-    // Pin >=3.3.0 — earlier 3.x versions forwarded `use_auth_token` directly
-    // to huggingface_hub.hf_hub_download(), which the modern huggingface_hub
-    // (>=0.20) renamed to `token` and made strict. pyannote.audio 3.3+ uses
-    // the modern `token=` kwarg internally.
+    // pyannote.audio 3.3.x still passes `use_auth_token=` through to
+    // hf_hub_download() — huggingface_hub 0.24+ removed that kwarg entirely,
+    // so we pin huggingface_hub to the last branch that accepts it as a
+    // (deprecated but functional) alias for token=. Updating once pyannote
+    // upstream fixes the forwarding will let us drop both pins.
     await runProcess(
       p.venvPip,
-      ['install', 'pyannote.audio>=3.3', '--quiet'],
+      ['install', 'pyannote.audio>=3.3', 'huggingface_hub<0.24', '--quiet'],
       (l) => emit({ phase: 'venv', label: l.slice(0, 80), percent: 0.9 })
     )
 
@@ -268,7 +269,7 @@ async function runSetup(app, emit) {
       'import os, sys',
       `os.environ["HF_HOME"] = ${JSON.stringify(p.hfCache)}`,
       'from pyannote.audio import Pipeline',
-      'Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", token=sys.argv[1])',
+      'Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=sys.argv[1])',
       'print("OK")',
     ].join('\n'))
 
