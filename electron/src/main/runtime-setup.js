@@ -241,7 +241,7 @@ async function runSetup(app, emit) {
       'import os, sys',
       `os.environ["HF_HOME"] = ${JSON.stringify(p.hfCache)}`,
       'from pyannote.audio import Pipeline',
-      'Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", token=sys.argv[1])',
+      'Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=sys.argv[1])',
       'print("OK")',
     ].join('\n'))
 
