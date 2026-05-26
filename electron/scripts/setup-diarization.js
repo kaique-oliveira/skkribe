@@ -339,7 +339,7 @@ function main() {
 
   run(`"${VENV_PIP}" install --upgrade pip --quiet`)
   console.log('\n📦 Instalando torch (CPU) + pyannote.audio (pode demorar)…\n')
-  run(`"${VENV_PIP}" install --quiet torch torchaudio --index-url https://download.pytorch.org/whl/cpu`)
+  run(`"${VENV_PIP}" install --quiet "torch<2.6" "torchaudio<2.6" --index-url https://download.pytorch.org/whl/cpu`)
   run(`"${VENV_PIP}" install --quiet "pyannote.audio>=3.3" "huggingface_hub<0.24"`)
 
   console.log('\n📥 Baixando pesos do pyannote/speaker-diarization-3.1 (uma vez)…\n')

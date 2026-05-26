@@ -115,9 +115,11 @@ export function App() {
       />
       break
     case STATUS.error:
+      // Boot/setup errors → reload to re-run checkSetup. Transcription errors
+      // would benefit from a soft reset, but reload is safe in both cases
+      // (the user has nothing in-flight when the error screen is showing).
       content = <ErrorView message={bootError || s.errorMessage} onRetry={() => {
-        setBootError(null)
-        s.reset()
+        window.location.reload()
       }} />
       break
     default:

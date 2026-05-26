@@ -93,7 +93,7 @@ function findSystemPython(app) {
 // Schema version of the python venv layout. Bump when changing the pinned
 // pyannote.audio version or the HF API kwargs — a mismatch triggers a venv
 // rebuild instead of leaving the user with an obscure Python TypeError.
-const VENV_SCHEMA = '2'
+const VENV_SCHEMA = '3'
 
 // ── Granular readiness check ─────────────────────────────────────────────────
 function checkSetup(app) {
@@ -236,9 +236,13 @@ async function runSetup(app, emit) {
     await runProcess(p.venvPip, ['install', '--upgrade', 'pip', '--quiet'])
 
     emit({ phase: 'venv', label: 'Instalando PyTorch CPU (~1.0 GB, pode demorar)…', percent: 0.25 })
+    // Pin torch<2.6: 2.6+ flipped torch.load's default to weights_only=True,
+    // and pyannote.audio's checkpoints include torch.torch_version.TorchVersion
+    // which isn't in the safe-globals allowlist. Until pyannote fixes the
+    // loading code, an older torch keeps the legacy default and Just Works.
     await runProcess(
       p.venvPip,
-      ['install', 'torch', 'torchaudio', '--index-url', 'https://download.pytorch.org/whl/cpu', '--quiet'],
+      ['install', 'torch<2.6', 'torchaudio<2.6', '--index-url', 'https://download.pytorch.org/whl/cpu', '--quiet'],
       (l) => emit({ phase: 'venv', label: l.slice(0, 80), percent: 0.45 })
     )
 
