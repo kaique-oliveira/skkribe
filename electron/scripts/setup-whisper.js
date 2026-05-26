@@ -39,7 +39,7 @@ function ensureCmake() {
   }
 }
 
-function main() {
+async function main() {
   console.log('\n🔧 setup-whisper.js — building whisper.cpp', WHISPER_TAG)
 
   if (existing() === WHISPER_TAG) {
@@ -101,28 +101,49 @@ function main() {
   // silent regions, which then poisons the diarization downstream.
   if (!fs.existsSync(VAD_BIN)) {
     console.log('\n📥 Baixando Silero VAD (~864 KB)…')
-    const https = require('node:https')
-    const out = fs.createWriteStream(VAD_BIN)
-    function follow(url, hops = 0) {
-      if (hops > 5) throw new Error('too many redirects')
-      https.get(url, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          res.resume()
-          return follow(new URL(res.headers.location, url).toString(), hops + 1)
-        }
-        if (res.statusCode !== 200) throw new Error(`HTTP ${res.statusCode}`)
-        res.pipe(out)
-      })
-    }
-    follow(SILERO_VAD_URL)
-    // Sync-ish wait — block until the file finishes writing.
-    while (!fs.existsSync(VAD_BIN) || fs.statSync(VAD_BIN).size < 500_000) {
-      execSync('sleep 0.5')
-    }
+    await downloadFile(SILERO_VAD_URL, VAD_BIN)
     console.log('✅ Silero VAD pronto em', VAD_BIN)
   } else {
     console.log('✓ Silero VAD já presente em', VAD_BIN)
   }
 }
 
-main()
+/** Promise-based HTTPS download with redirect follow + atomic .part rename.
+ *  The old implementation kicked off https.get and then sat in a sync `while +
+ *  execSync('sleep')` polling loop — which blocks the Node event loop and
+ *  prevents the response callback from ever firing. Deadlock in CI (locally
+ *  the existing VAD file made the code path short-circuit). */
+function downloadFile(url, dest) {
+  const https = require('node:https')
+  const tmp = dest + '.part'
+  return new Promise((resolve, reject) => {
+    fs.mkdirSync(path.dirname(dest), { recursive: true })
+    const out = fs.createWriteStream(tmp)
+    function follow(currentUrl, hops = 0) {
+      if (hops > 5) return reject(new Error(`muitos redirects em ${currentUrl}`))
+      const req = https.get(currentUrl, { headers: { 'user-agent': 'skribe-setup' } }, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          res.resume()
+          return follow(new URL(res.headers.location, currentUrl).toString(), hops + 1)
+        }
+        if (res.statusCode !== 200) {
+          res.resume()
+          return reject(new Error(`HTTP ${res.statusCode} em ${currentUrl}`))
+        }
+        res.pipe(out)
+        out.on('finish', () => {
+          out.close((err) => {
+            if (err) return reject(err)
+            try { fs.renameSync(tmp, dest) } catch (e) { return reject(e) }
+            resolve()
+          })
+        })
+        out.on('error', reject)
+      })
+      req.on('error', reject)
+    }
+    follow(url)
+  })
+}
+
+main().catch((err) => { console.error('\n❌', err.message); process.exit(1) })
