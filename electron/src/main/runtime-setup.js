@@ -260,7 +260,7 @@ async function runSetup(app, emit) {
 
     // Write a schema-version marker so a future API break can re-create the
     // venv automatically instead of confusing the user with kwarg TypeErrors.
-    fs.writeFileSync(path.join(p.venvDir, '.skribe-venv-schema'), '1', 'utf8')
+    fs.writeFileSync(path.join(p.venvDir, '.skribe-venv-schema'), VENV_SCHEMA, 'utf8')
   }
 
   // ── Phase 3: pyannote model weights ────────────────────────────────────────
