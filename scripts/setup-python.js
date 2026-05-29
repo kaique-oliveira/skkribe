@@ -8,12 +8,14 @@
  *   The diarization stack (pyannote.audio + torch) is extremely sensitive to
  *   the Python version. We pin torch<2.6 (to keep the pre-2.6 torch.load
  *   default that pyannote checkpoints rely on), and torch<2.6 only ships
- *   wheels for Python 3.9, 3.12. A user (or CI runner) whose system `python3`
+ *   wheels for Python 3.9 to 3.12. A user (or CI runner) whose system `python3`
  *   is 3.13/3.14, or missing python3-venv, would fail. Shipping our own
  *   3.11 makes the venv deterministic and identical on macOS, Windows, Linux.
  *
- * The release tags are date-based and rotate, so instead of hardcoding one we
- * query the GitHub API for the latest release and pick the matching 3.11 asset.
+ * We pin a known release and build the asset URL directly. Querying the GitHub
+ * API for "latest" rate-limits anonymous CI requests (HTTP 403), and a pinned
+ * release asset never disappears, so this is deterministic and robust. Bump
+ * PBS_RELEASE + PY_VERSION together to move to a newer 3.11.x.
  *
  * Run: pnpm run setup:python   (idempotent, skips if already present)
  */
@@ -23,8 +25,8 @@ const path = require('node:path')
 const https = require('node:https')
 const { execSync } = require('node:child_process')
 
-const PY_MINOR = '3.11'
-const REPO = 'astral-sh/python-build-standalone'
+const PBS_RELEASE = '20260510'
+const PY_VERSION = '3.11.15'
 const ROOT = path.join(__dirname, '..')
 const RUNTIME_DIR = path.join(ROOT, 'resources', 'python', 'runtime')
 
@@ -44,31 +46,6 @@ function runtimePythonPath() {
   return process.platform === 'win32'
     ? path.join(RUNTIME_DIR, 'python.exe')
     : path.join(RUNTIME_DIR, 'bin', 'python3')
-}
-
-function ghHeaders() {
-  const h = { 'user-agent': 'skkribe-setup', accept: 'application/vnd.github+json' }
-  // CI provides GITHUB_TOKEN, use it to dodge the 60 req/h anonymous limit.
-  if (process.env.GITHUB_TOKEN) h.authorization = `Bearer ${process.env.GITHUB_TOKEN}`
-  return h
-}
-
-function getJson(url) {
-  return new Promise((resolve, reject) => {
-    https.get(url, { headers: ghHeaders() }, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        res.resume()
-        return resolve(getJson(new URL(res.headers.location, url).toString()))
-      }
-      if (res.statusCode !== 200) {
-        res.resume()
-        return reject(new Error(`HTTP ${res.statusCode} em ${url}`))
-      }
-      let body = ''
-      res.on('data', (c) => { body += c })
-      res.on('end', () => { try { resolve(JSON.parse(body)) } catch (e) { reject(e) } })
-    }).on('error', reject)
-  })
 }
 
 function download(url, dest) {
@@ -112,7 +89,7 @@ function download(url, dest) {
 }
 
 async function main() {
-  console.log(`\n🐍 setup-python.js, CPython ${PY_MINOR} portátil (${process.platform}-${process.arch})`)
+  console.log(`\n🐍 setup-python.js, CPython ${PY_VERSION} portátil (${process.platform}-${process.arch})`)
 
   if (fs.existsSync(runtimePythonPath())) {
     console.log('✓ Python portátil já presente em', RUNTIME_DIR, ', pulando')
@@ -123,20 +100,12 @@ async function main() {
   const triple = TRIPLES[key]
   if (!triple) throw new Error(`Plataforma sem build do python-build-standalone: ${key}`)
 
-  // install_only.tar.gz is the relocatable bundle with pip + venv; prefer it,
-  // but accept the older non-"_stripped" naming just in case.
-  const wantRe = new RegExp(`^cpython-${PY_MINOR.replace('.', '\\.')}\\.\\d+\\+\\d+-${triple}-install_only\\.tar\\.gz$`)
+  const file = `cpython-${PY_VERSION}+${PBS_RELEASE}-${triple}-install_only.tar.gz`
+  const url = `https://github.com/astral-sh/python-build-standalone/releases/download/${PBS_RELEASE}/${file}`
 
-  console.log('🔎 buscando a release mais recente do python-build-standalone…')
-  const release = await getJson(`https://api.github.com/repos/${REPO}/releases/latest`)
-  const asset = (release.assets || []).find((a) => wantRe.test(a.name))
-  if (!asset) {
-    throw new Error(`Nenhum asset ${PY_MINOR} install_only para ${triple} na release ${release.tag_name}`)
-  }
-
-  console.log(`📥 ${asset.name}`)
+  console.log(`📥 ${file}`)
   const tarball = path.join(ROOT, 'resources', 'python', '_py.tar.gz')
-  await download(asset.browser_download_url, tarball)
+  await download(url, tarball)
 
   // The "install_only" tarball has a top-level python/ dir; strip it so we get
   // runtime/bin/python3 (unix) or runtime/python.exe (windows) directly.
