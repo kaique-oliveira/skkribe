@@ -6,6 +6,8 @@ const { contextBridge, ipcRenderer } = require('electron')
 contextBridge.exposeInMainWorld('skkribe', {
   // first-run setup
   checkSetup: () => ipcRenderer.invoke('setup:check'),
+  getTokenStatus: () => ipcRenderer.invoke('setup:token-status'),
+  saveToken: (token) => ipcRenderer.invoke('setup:save-token', token),
   runSetup: () => ipcRenderer.invoke('setup:run'),
   onSetupProgress: (cb) => {
     const listener = (_e, payload) => cb(payload)

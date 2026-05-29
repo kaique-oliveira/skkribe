@@ -28,6 +28,7 @@ resources/python/venv/
 resources/python/hf_cache/
 resources/python/runtime/
 resources/python/.diarization-config.json
+resources/python/.hf-token
 resources/perf-config.json
 
 # electron-builder output

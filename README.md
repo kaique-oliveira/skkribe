@@ -1,161 +1,178 @@
+<div align="center">
+
+<img src="build/icon.svg" width="96" height="96" alt="Skkribe logo" />
+
 # Skkribe
 
-Transcrição local com identificação de falantes: `whisper.cpp` em chunks
-paralelos + `pyannote.audio` 3.1 via subprocess Python. App Electron
-cross-platform — macOS, Windows, Linux.
+**Transcrição de áudio + identificação de quem falou — 100% no seu computador.**
 
-O modelo é fixado em **whisper `large-v3`** (a melhor variante para nomes
-próprios e palavras raras) — não há tela de configurações no app: qualidade
-máxima sempre.
+Sem nuvem, sem conta paga, sem enviar seu áudio pra lugar nenhum.
+Roda em macOS, Windows e Linux.
 
-## Como o usuário final usa
+[Baixar instalador](#-baixar-e-usar) · [Como funciona](#-como-funciona) ·
+[Rodar do código](#-rodar-do-código-fonte) · [Gerar build](docs/BUILD.md) ·
+[Contribuir](docs/CONTRIBUTING.md)
 
-1. Baixa o instalador da plataforma dele (`.dmg` / `.exe` / `.AppImage`) do
-   GitHub Releases
-2. Instala normalmente
-3. Abre o app — a primeira execução baixa **automaticamente** o modelo de
-   transcrição + cria o ambiente Python + baixa os pesos do pyannote.audio
-   (token HuggingFace embutido no app, ~2,7 GB no total, 5-15 min dependendo
-   da conexão)
-4. Da segunda execução em diante: abre instantâneo
+</div>
 
-**Token HuggingFace:** está embutido em [`src/main/runtime-setup.js`](src/main/runtime-setup.js)
-como uma constante. É um token pessoal de leitura, usado só pra autenticar
-o download dos pesos do pyannote.audio na primeira execução. Pode ser
-regenerado se for abusado.
+---
 
-## Setup de desenvolvedor
+## O que é
+
+Você joga um áudio (reunião, entrevista, podcast, áudio do WhatsApp) e o Skkribe
+devolve a transcrição **separada por pessoa**:
+
+```
+Pessoa 1   00:00
+Bom dia, vamos começar a reunião de hoje.
+
+Pessoa 2   00:04
+Perfeito. Eu preparei os números do trimestre.
+```
+
+Dá pra renomear as pessoas, copiar a fala de cada uma, e exportar tudo em Markdown.
+
+**Tudo processado localmente** usando dois projetos open source de ponta:
+
+- [**whisper.cpp**](https://github.com/ggml-org/whisper.cpp) — transcrição (modelo `large-v3` da OpenAI, o melhor pra nomes próprios e palavras raras)
+- [**pyannote.audio**](https://github.com/pyannote/pyannote-audio) — identificação de falantes (diarização)
+
+---
+
+## 📥 Baixar e usar
+
+> Para quem só quer **usar** o app, sem mexer em código.
+
+1. Baixe o instalador da sua plataforma na página de
+   [**Releases**](https://github.com/kaique-oliveira/skkribe/releases):
+   - **macOS** → `.dmg`
+   - **Windows** → `.exe`
+   - **Linux** → `.AppImage`
+2. Instale e abra normalmente.
+3. Na primeira vez, o app pede um **token gratuito da HuggingFace** (≈2 min — o
+   guia aparece na tela) e baixa os modelos automaticamente (~2,7 GB, uma vez só).
+4. Pronto. Da próxima vez abre direto.
+
+👉 Passo a passo detalhado da primeira execução em
+[**docs/GETTING_STARTED.md**](docs/GETTING_STARTED.md).
+
+---
+
+## ✨ Como funciona
+
+```
+  seu áudio (mp3, m4a, wav, mp4, …)
+        │
+        ▼
+   ┌──────────┐   converte pra WAV 16 kHz mono
+   │  ffmpeg  │   e corta em blocos de 60 s
+   └──────────┘
+        │
+        ▼
+   ┌────────────────┐   transcreve os blocos EM PARALELO
+   │  whisper.cpp   │   (pula silêncios com VAD pra não inventar texto)
+   └────────────────┘
+        │                      ┌──────────────────┐   descobre quem fala
+        │  texto + tempos      │  pyannote.audio  │   em cada trecho
+        └──────────────────────┤  (no áudio todo) │
+                               └──────────────────┘
+        │
+        ▼
+   junta palavra-a-palavra ao falante certo (overlap + suavização)
+        │
+        ▼
+   transcrição final separada por "Pessoa 1, 2, 3…"
+```
+
+Quer o detalhe técnico de cada etapa, os algoritmos de atribuição e as decisões
+de design? Está tudo em [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md).
+
+---
+
+## 🧑‍💻 Rodar do código-fonte
+
+> Para quem quer **estudar** ou **modificar** o app.
+
+### Pré-requisitos
+
+| Ferramenta | Versão | Pra quê |
+|---|---|---|
+| [Node.js](https://nodejs.org) | 20+ | rodar o Electron + Vite |
+| [pnpm](https://pnpm.io/installation) | 9+ | gerenciador de pacotes |
+| [CMake](https://cmake.org) + compilador C++ | — | compilar o whisper.cpp |
+| [Python](https://python.org) | 3.10–3.12 | rodar o pyannote.audio |
+| [Git](https://git-scm.com) | — | clonar o whisper.cpp |
+
+> Os detalhes de instalação de cada um (por sistema operacional) estão nos guias
+> de build linkados abaixo.
+
+### Passos
 
 ```bash
+# 1. clonar
+git clone https://github.com/kaique-oliveira/skkribe.git
+cd skkribe
+
+# 2. instalar dependências (raiz + renderer)
 pnpm install
 pnpm install --dir src/renderer
 
-# build do binário whisper.cpp (~3-5 min)
+# 3. compilar o binário do whisper.cpp (uma vez, ~3-5 min)
 pnpm run setup:whisper
-```
 
-A primeira `pnpm run dev` faz o resto do setup automaticamente (download do
-modelo, criação do venv, download dos pesos pyannote). Se preferir disparar
-o setup manualmente sem abrir o app, use os scripts legados:
-
-```bash
-pnpm run setup:model
-pnpm run setup:diarization -- --token=hf_xxxxxxxxxxxx
-```
-
-## Rodar (dev)
-
-```bash
+# 4. rodar em modo desenvolvimento (hot reload)
 pnpm run dev
 ```
 
-Sobe o Vite (renderer em `http://localhost:5173`) + Electron com hot reload.
+Na primeira execução o app pede seu token HuggingFace e baixa os modelos
+automaticamente — igual ao app instalado.
 
-## Build (distribuição)
+---
 
-```bash
-pnpm run build:mac     # DMG + ZIP (arm64) em dist/
-pnpm run build:win     # NSIS .exe (x64) em dist/
-pnpm run build:linux   # AppImage (x64) em dist/
-```
+## 📦 Gerar o executável
 
-Cada SO precisa ser empacotado no próprio host (electron-builder não faz
-cross-compile do binário whisper.cpp). Para todos de uma vez, use o
-workflow CI.
+Cada sistema operacional precisa ser empacotado no próprio sistema (o
+whisper.cpp é compilado nativamente, não dá pra cross-compilar).
 
-### O que vai no instalador
-
-Bundlado por OS (~150-200 MB):
-
-| Recurso | Origem | Tamanho |
+| Plataforma | Guia | Comando |
 |---|---|---|
-| `resources/whisper/main(.exe)` | compilado no CI a partir do whisper.cpp v1.8.4 | ~10-15 MB |
-| `resources/whisper/ggml-silero-v5.1.2.bin` | baixado pelo setup-whisper.js | ~864 KB |
-| `resources/python/diarize.py` | committed no repo | <10 KB |
-| `resources/python/runtime/` (Windows apenas) | python-build-standalone | ~25 MB |
+| 🍎 macOS | [docs/build-macos.md](docs/build-macos.md) | `pnpm run build:mac` |
+| 🪟 Windows | [docs/build-windows.md](docs/build-windows.md) | `pnpm run build:win` |
+| 🐧 Linux | [docs/build-linux.md](docs/build-linux.md) | `pnpm run build:linux` |
 
-Baixado automaticamente no primeiro launch (~2,7 GB):
+Visão geral e a opção de build automático via GitHub Actions:
+[**docs/BUILD.md**](docs/BUILD.md).
 
-- `ggml-large-v3-q5_0.bin` (~1,08 GB) — do HuggingFace
-- `python/venv` com torch CPU + pyannote.audio (~1,5 GB) — via pip
-- pesos do pyannote (~100 MB) — do HuggingFace usando o token embutido
+---
 
-### CI (GitHub Actions)
+## 📚 Documentação
 
-`.github/workflows/build-electron.yml` faz build matrix em `macos-14`,
-`windows-latest` e `ubuntu-22.04` (somente Windows habilitado por enquanto).
-Cada job:
+| Doc | Pra quem |
+|---|---|
+| [GETTING_STARTED.md](docs/GETTING_STARTED.md) | Usuário final — primeira execução, token HF |
+| [BUILD.md](docs/BUILD.md) | Visão geral de como gerar os instaladores |
+| [build-macos.md](docs/build-macos.md) · [build-windows.md](docs/build-windows.md) · [build-linux.md](docs/build-linux.md) | Guia passo a passo por plataforma |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Quem quer entender o código por dentro |
+| [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Resolver erros comuns |
+| [CONTRIBUTING.md](docs/CONTRIBUTING.md) | Como contribuir |
 
-1. Clona + `pnpm install` deps
-2. Build do renderer (Vite)
-3. **Build do whisper.cpp** (cmake) + download do VAD
-4. **Windows apenas**: download do python-build-standalone
-5. electron-builder empacota tudo em `extraResources`
-6. Upload do `.dmg` / `.exe` / `.AppImage` como artifact (14 dias)
+---
 
-Triggers:
+## 🔒 Privacidade
 
-- `workflow_dispatch` — rodar manualmente pela aba Actions
-- `git push tag skkribe-v*` — corta release
+O áudio **nunca sai do seu computador**. A única conexão de rede que o Skkribe
+faz é na **primeira execução**, pra baixar os modelos da HuggingFace. Depois
+disso ele funciona 100% offline.
 
-### Logo
+---
 
-`build/icon.svg` é a fonte (white squircle + dot vermelho de gravação +
-3 linhas de transcript). `icon.png` (1024×1024) e `icon.icns` (multi-res
-macOS) são gerados via `qlmanage` + `iconutil`. O ICO para Windows é
-gerado automaticamente pelo electron-builder a partir do PNG.
+## 📄 Licença
 
-## Arquitetura
+[MIT](LICENSE) — use, estude, modifique e distribua à vontade.
 
-```
-skkribe/
-├── src/main/
-│   ├── index.js              # pipeline: ffmpeg → chunks → whisper paralelo → pyannote
-│   ├── runtime-setup.js      # auto-setup no primeiro launch (token HF embutido)
-│   └── preload.js            # window.skkribe API exposta ao renderer
-├── src/renderer/
-│   └── src/
-│       ├── App.jsx           # state machine + IPC + roteamento
-│       ├── lib/{state.js,format.js}
-│       ├── components/       # PopIn, Buttons, StatusPill, icons
-│       └── views/            # DropZone, SpeakerCount, FirstRunSetup, Result, …
-├── scripts/                  # setup manual (legacy / dev)
-│   ├── setup-whisper.js
-│   ├── setup-diarization.js
-│   └── download-model.js
-└── resources/
-    ├── whisper/
-    │   ├── main(.exe)        # bundled — built by CI
-    │   ├── ggml-silero-v5.1.2.bin    # bundled
-    │   └── models/           # ⊕ runtime download → userData em prod
-    └── python/
-        ├── diarize.py        # bundled — committed
-        ├── runtime/          # bundled (Windows apenas)
-        ├── venv/             # ⊕ runtime → userData em prod
-        └── hf_cache/         # ⊕ runtime → userData em prod
-```
-
-`⊕` = NÃO bundled. Em **dev** vive em `resources/`; em **prod** vive em
-`app.getPath('userData')` (gravável pelo usuário, fora do .app/.exe).
-
-### Pipeline
-
-1. `ffmpeg` → WAV 16 kHz mono
-2. `ffmpeg segment` → blocos de 60s
-3. `whisper.cpp` em **N processos paralelos** (default `cpus/2`) — cada bloco
-   transcreve em paralelo. Timestamps absolutos ao concatenar.
-4. `pyannote.audio` no **WAV completo** (não chunked) — usa MPS no Apple
-   Silicon, fallback CUDA, fallback CPU.
-5. Word-level overlap + hysteresis pra atribuir cada palavra ao speaker correto.
-6. Rename: speakers viram "Pessoa 1", "Pessoa 2", … na ordem de aparição.
-
-### UI
-
-- Tema claro com bg branco + nested gray (`#F0F1F3`)
-- Accent recording red `#DC2626`
-- Pills `rounded-full` em todo lugar
-- Animações `popIn` (fade + scale com spring overshoot) via framer-motion
-- 7 views: DropZone, SpeakerCount, ModelLoading, FirstRunSetup, Processing,
-  Result, SpeakerNaming, Error
-- Janela 600×1040 (estreita + alta), com cap em 820 de largura
-- Cross-fade (160ms) entre views via `AnimatePresence`
+Construído sobre projetos open source incríveis:
+[whisper.cpp](https://github.com/ggml-org/whisper.cpp),
+[pyannote.audio](https://github.com/pyannote/pyannote-audio),
+[Electron](https://electronjs.org),
+[React](https://react.dev) e
+[ffmpeg](https://ffmpeg.org).

@@ -1,8 +1,30 @@
 {
-  "name": "skkribe-electron",
+  "name": "skkribe",
   "version": "1.0.0",
-  "description": "Skkribe — local transcription + diarization with whisper.cpp + pyannote.audio. UI parity with the Mac native port.",
+  "description": "Skkribe — 100% local audio transcription + speaker diarization (whisper.cpp + pyannote.audio) in a cross-platform Electron app.",
   "main": "src/main/index.js",
+  "license": "MIT",
+  "author": "Kaique Oliveira",
+  "homepage": "https://github.com/kaique-oliveira/skkribe#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaique-oliveira/skkribe.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kaique-oliveira/skkribe/issues"
+  },
+  "keywords": [
+    "transcription",
+    "diarization",
+    "whisper",
+    "whisper.cpp",
+    "pyannote",
+    "speech-to-text",
+    "electron",
+    "offline",
+    "local",
+    "privacy"
+  ],
   "scripts": {
     "dev": "concurrently \"npm:dev:renderer\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "dev:renderer": "npm --prefix src/renderer run dev",

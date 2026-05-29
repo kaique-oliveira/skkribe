@@ -298,6 +298,17 @@ app.on('window-all-closed', () => {
 
 ipcMain.handle('setup:check', async () => runtimeSetup.checkSetup(app))
 
+ipcMain.handle('setup:token-status', async () => ({ hasToken: !!runtimeSetup.readToken(app) }))
+
+ipcMain.handle('setup:save-token', async (_e, token) => {
+  try {
+    runtimeSetup.saveToken(app, token)
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err.message || String(err) }
+  }
+})
+
 ipcMain.handle('setup:run', async (event) => {
   const emit = (payload) => event.sender.send('setup:progress', payload)
   try {
@@ -364,7 +375,7 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
   const vadModel = p.vadModel
   const diarizeScript = p.diarizeScript
   const pythonBin = p.venvPython
-  const hfToken = runtimeSetup.HF_TOKEN
+  const hfToken = runtimeSetup.readToken(app)
   const modelPath = p.whisperModel
 
   const { chunkSeconds: chunkSecs } = PIPELINE

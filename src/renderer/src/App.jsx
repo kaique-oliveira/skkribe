@@ -55,13 +55,9 @@ export function App() {
       s.finishProcessing({ fileName, segments })
     } catch (err) {
       const msg = err?.message || String(err)
-      const friendly = msg === 'diarization_not_configured'
-        ? 'Diarização não configurada. Rode: npm run setup:diarization -- --token=hf_…'
-        : msg === 'whisper_not_found'
-          ? 'whisper.cpp não encontrado. Rode: npm run setup:whisper'
-          : msg === 'model_not_found'
-            ? 'Modelo de transcrição não baixado. Rode: npm run setup:model'
-            : msg
+      const friendly = (msg === 'diarization_not_configured' || msg === 'whisper_not_found' || msg === 'model_not_found')
+        ? 'A configuração está incompleta. Reabra o app para refazer o download dos modelos.'
+        : msg
       s.failProcessing(friendly)
     } finally {
       off()

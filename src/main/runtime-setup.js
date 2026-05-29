@@ -17,8 +17,8 @@
 //                      • python-venv/                     created at first run
 //                      • hf-cache/                        pyannote weights
 //
-// In dev (`npm run dev`), both base paths collapse to the repo's
-// `electron/resources/` directory so manual setup-* scripts still work.
+// In dev (`pnpm run dev`), both base paths collapse to the repo's
+// `resources/` directory so manual setup-* scripts still work.
 
 const fs = require('fs')
 const path = require('path')
@@ -26,12 +26,11 @@ const os = require('os')
 const https = require('https')
 const { spawn, spawnSync } = require('child_process')
 
-// Embedded HuggingFace token for the gated pyannote repos. Only used by the
-// first-run setup to download model weights — runtime diarization reads the
-// cached weights and doesn't re-auth. The token is visible to anyone who
-// extracts the installer; it's a personal read-only token and can be
-// regenerated if abuse is detected.
-const HF_TOKEN = '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'
+// HuggingFace access token for the gated pyannote.audio repos. Each user
+// supplies their OWN token on first launch (the app is open source — we don't
+// ship a shared credential). It's saved to userData and reused for every later
+// diarization run. See docs/GETTING_STARTED for how a user creates one.
+const HF_TOKEN_PREFIX = 'hf_'
 
 const WHISPER_MODEL_FILE = 'ggml-large-v3-q5_0.bin'
 const WHISPER_MODEL_URL  = `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${WHISPER_MODEL_FILE}`
@@ -75,13 +74,47 @@ function paths(app) {
                               process.platform === 'win32' ? 'pip.exe' : 'pip'),
     hfCache:        path.join(user, 'python', 'hf_cache'),
     setupMarker:    path.join(user, 'python', 'hf_cache', '.complete'),
+    tokenFile:      path.join(user, 'python', '.hf-token'),
   }
+}
+
+// ── HuggingFace token storage (per-user, never committed) ────────────────────
+
+/** Read the saved HF token, or null if the user hasn't entered one yet. */
+function readToken(app) {
+  try {
+    const t = fs.readFileSync(paths(app).tokenFile, 'utf8').trim()
+    return t || null
+  } catch (_) {
+    return null
+  }
+}
+
+/** Validate + persist the HF token. Throws on an obviously-wrong format so the
+ *  UI can show a friendly message instead of failing later in Python. */
+function saveToken(app, token) {
+  const t = (token || '').trim()
+  if (!t.startsWith(HF_TOKEN_PREFIX)) {
+    throw new Error('Token inválido — deve começar com "hf_". Crie um em huggingface.co/settings/tokens')
+  }
+  const p = paths(app)
+  fs.mkdirSync(path.dirname(p.tokenFile), { recursive: true })
+  fs.writeFileSync(p.tokenFile, t, 'utf8')
+  return true
 }
 
 function findSystemPython(app) {
   if (process.platform === 'win32') {
-    const p = paths(app).winPythonBin
-    return fs.existsSync(p) ? p : null
+    // Packaged: use the bundled python-build-standalone runtime we ship.
+    const bundled = paths(app).winPythonBin
+    if (fs.existsSync(bundled)) return bundled
+    // Dev (running from source, no bundled runtime): fall back to a system
+    // Python so contributors on Windows can `pnpm run dev` without packaging.
+    for (const bin of ['py', 'python', 'python3']) {
+      const r = spawnSync(bin, ['--version'], { stdio: 'pipe' })
+      if (r.status === 0) return bin
+    }
+    return null
   }
   for (const bin of ['python3', 'python3.11', 'python3.12', 'python3.10', 'python']) {
     const r = spawnSync(bin, ['--version'], { stdio: 'pipe' })
@@ -118,6 +151,7 @@ function checkSetup(app) {
               && fs.existsSync(schemaFile)
               && fs.readFileSync(schemaFile, 'utf8').trim() === VENV_SCHEMA
   const checks = {
+    hfToken:         !!readToken(app),
     whisperBin:      fs.existsSync(p.whisperBin),
     vadModel:        fs.existsSync(p.vadModel),
     diarizeScript:   fs.existsSync(p.diarizeScript),
@@ -202,6 +236,9 @@ async function runSetup(app, emit) {
   if (!checks.whisperBin)    throw new Error('whisper-cli não foi empacotado no instalador (bug de build)')
   if (!checks.vadModel)      throw new Error('modelo VAD não foi empacotado no instalador (bug de build)')
   if (!checks.diarizeScript) throw new Error('diarize.py não foi empacotado no instalador (bug de build)')
+
+  const hfToken = readToken(app)
+  if (!hfToken) throw new Error('Token HuggingFace ausente. Informe seu token antes de continuar.')
 
   // ── Phase 1: whisper model ─────────────────────────────────────────────────
   if (!checks.whisperModel) {
@@ -302,7 +339,7 @@ async function runSetup(app, emit) {
     try {
       await runProcess(
         p.venvPython,
-        [downloadScript, HF_TOKEN],
+        [downloadScript, hfToken],
         (l) => emit({ phase: 'weights', label: l.slice(0, 80), percent: 0.5 }),
         { HF_HOME: p.hfCache }
       )
@@ -315,4 +352,4 @@ async function runSetup(app, emit) {
   emit({ phase: 'done', label: 'Tudo pronto!', percent: 1 })
 }
 
-module.exports = { checkSetup, runSetup, HF_TOKEN, paths, bundledBase, userBase }
+module.exports = { checkSetup, runSetup, readToken, saveToken, paths, bundledBase, userBase }
