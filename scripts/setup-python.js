@@ -29,12 +29,15 @@ const ROOT = path.join(__dirname, '..')
 const RUNTIME_DIR = path.join(ROOT, 'resources', 'python', 'runtime')
 
 // python-build-standalone "install_only" target triples per platform+arch.
+// (Windows used to publish a "-shared" install_only variant; recent releases
+// dropped the suffix and ship a plain "...-pc-windows-msvc-install_only".)
 const TRIPLES = {
   'darwin-arm64': 'aarch64-apple-darwin',
   'darwin-x64':   'x86_64-apple-darwin',
   'linux-x64':    'x86_64-unknown-linux-gnu',
   'linux-arm64':  'aarch64-unknown-linux-gnu',
-  'win32-x64':    'x86_64-pc-windows-msvc-shared',
+  'win32-x64':    'x86_64-pc-windows-msvc',
+  'win32-arm64':  'aarch64-pc-windows-msvc',
 }
 
 function runtimePythonPath() {
