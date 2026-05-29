@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * download-model.js — fetches a whisper.cpp GGML model into resources/whisper/models/
+ * download-model.js, fetches a whisper.cpp GGML model into resources/whisper/models/
  * Always picks a quantized variant when available (smaller + faster, ~1% WER cost).
  *
  * Run: npm run setup:model                        # small + q5_1 (default)
@@ -81,11 +81,11 @@ async function main() {
   const dest = path.join(MODELS_DIR, filename)
 
   if (fs.existsSync(dest) && fs.statSync(dest).size >= MIN_VALID_SIZE) {
-    console.log(`✓ ${filename} já existe (${(fs.statSync(dest).size / 1e6).toFixed(1)} MB) — pulando`)
+    console.log(`✓ ${filename} já existe (${(fs.statSync(dest).size / 1e6).toFixed(1)} MB), pulando`)
     return
   }
   if (fs.existsSync(dest)) {
-    console.log(`⚠ ${filename} existe mas corrompido — removendo`)
+    console.log(`⚠ ${filename} existe mas corrompido, removendo`)
     fs.unlinkSync(dest)
   }
 
@@ -96,10 +96,10 @@ async function main() {
   const sz = fs.statSync(dest).size
   if (sz < MIN_VALID_SIZE) {
     fs.unlinkSync(dest)
-    console.error(`❌ Download incompleto (${sz} bytes) — tente de novo`)
+    console.error(`❌ Download incompleto (${sz} bytes), tente de novo`)
     process.exit(1)
   }
-  console.log(`✅ Pronto — ${(sz / 1e6).toFixed(1)} MB`)
+  console.log(`✅ Pronto, ${(sz / 1e6).toFixed(1)} MB`)
 }
 
 main().catch((err) => { console.error('❌', err.message); process.exit(1) })

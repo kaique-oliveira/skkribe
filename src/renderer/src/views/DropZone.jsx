@@ -27,7 +27,7 @@ export function DropZone({ onFileSelected }) {
       onDragLeave={() => setDragging(false)}
       onDrop={onDrop}
     >
-      {/* Hero — recording-red dot */}
+      {/* Hero, recording-red dot */}
       <PopIn>
         <div className="pt-3 relative w-24 h-24">
           <div className="absolute inset-0 rounded-full bg-accent-light" />

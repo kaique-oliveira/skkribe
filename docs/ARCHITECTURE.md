@@ -35,12 +35,12 @@ skkribe/
 
 ### Dois processos (regra do Electron)
 
-- **Main** (Node.js) — acesso total ao sistema: roda ffmpeg, whisper, Python,
+- **Main** (Node.js), acesso total ao sistema: roda ffmpeg, whisper, Python,
   lê/escreve arquivos. É onde mora a pipeline pesada.
-- **Renderer** (Chromium) — só a UI. Não toca no sistema diretamente; pede tudo
+- **Renderer** (Chromium), só a UI. Não toca no sistema diretamente; pede tudo
   ao main via IPC.
-- **Preload** — define exatamente o que o renderer pode chamar
-  (`window.skkribe.transcribe(...)`, etc). Tudo o mais é inacessível —
+- **Preload**, define exatamente o que o renderer pode chamar
+  (`window.skkribe.transcribe(...)`, etc). Tudo o mais é inacessível,
   é a fronteira de segurança.
 
 ---
@@ -49,13 +49,13 @@ skkribe/
 
 Tudo acontece em `src/main/index.js`, no handler `transcribe:file`.
 
-### Passo 1 — Normalizar o áudio (ffmpeg)
+### Passo 1: Normalizar o áudio (ffmpeg)
 
 Qualquer formato → WAV 16 kHz mono. É o formato que tanto o whisper quanto o
 pyannote esperam. Usa o binário do pacote `ffmpeg-static` (não depende do
 ffmpeg do sistema).
 
-### Passo 2 — Cortar em blocos de 60s
+### Passo 2: Cortar em blocos de 60s
 
 `ffmpeg segment` divide o WAV em pedaços. Isso permite transcrever **em
 paralelo** no passo seguinte.
@@ -63,10 +63,10 @@ paralelo** no passo seguinte.
 > Usamos re-encode (`pcm_s16le`), não `-c copy`. PCM não tem keyframes, e
 > `-c copy` produziria blocos truncados.
 
-### Passo 3 — Transcrever em paralelo (whisper.cpp)
+### Passo 3: Transcrever em paralelo (whisper.cpp)
 
 `transcribeChunksParallel` roda N processos do whisper simultaneamente. O número
-de workers × threads é calculado por `balanceParallelism(cores)` — mira ~4
+de workers × threads é calculado por `balanceParallelism(cores)`, mira ~4
 threads por worker (o ponto ótimo do whisper.cpp), com teto de 6 workers.
 
 Flags importantes do whisper:
@@ -81,26 +81,26 @@ Flags importantes do whisper:
 Os tokens são reagrupados em **palavras** (`groupTokensIntoWords`) com seus
 tempos de início/fim.
 
-### Passo 4 — Identificar os falantes (pyannote.audio)
+### Passo 4: Identificar os falantes (pyannote.audio)
 
 `resources/python/diarize.py` roda no WAV **inteiro** (não nos blocos) e devolve
 "de tal a tal segundo, falou o speaker X". Usa MPS (GPU Apple), CUDA, ou CPU,
 nessa ordem de preferência.
 
 Se o usuário disse quantas pessoas há, passamos `--num-speakers=N` (restrição
-forte — hints suaves deixam o pyannote inventar falantes-fantasma).
+forte, hints suaves deixam o pyannote inventar falantes-fantasma).
 
-### Passo 5 — Casar palavras com falantes
+### Passo 5: Casar palavras com falantes
 
 Aqui está o "molho secreto", em `diarize.py`:
 
-1. **`merge_minor_speakers`** — remove falantes-fantasma (clusters com <5s ou
+1. **`merge_minor_speakers`**, remove falantes-fantasma (clusters com <5s ou
    <4% do total são reatribuídos ao vizinho real mais próximo).
-2. **`smooth_diar`** — funde "blips" de <500ms encravados entre dois turnos do
+2. **`smooth_diar`**, funde "blips" de <500ms encravados entre dois turnos do
    mesmo falante (re-segmentação por restrição).
-3. **`assign_speakers_word_level`** — pra cada palavra, escolhe o falante com
+3. **`assign_speakers_word_level`**, pra cada palavra, escolhe o falante com
    **maior sobreposição temporal** (algoritmo do WhisperX).
-4. **`smooth_word_speakers`** — histerese: uma sequência curta (<3 palavras) de
+4. **`smooth_word_speakers`**, histerese: uma sequência curta (<3 palavras) de
    um falante, cercada pelo mesmo outro falante dos dois lados, é considerada
    ruído e reescrita.
 
@@ -126,12 +126,12 @@ embutido, o resto baixa no primeiro launch.
 
 ### As 3 fases (idempotentes)
 
-`runSetup` só roda o que falta — se o app crashar no meio, retoma de onde parou:
+`runSetup` só roda o que falta, se o app crashar no meio, retoma de onde parou:
 
-1. **model** — baixa `ggml-large-v3-q5_0.bin` (~1 GB) da HuggingFace
-2. **venv** — cria o venv a partir do **Python 3.11 portátil bundlado** (não do
+1. **model**, baixa `ggml-large-v3-q5_0.bin` (~1 GB) da HuggingFace
+2. **venv**, cria o venv a partir do **Python 3.11 portátil bundlado** (não do
    Python do sistema), instala `torch<2.6` + `pyannote.audio>=3.3`
-3. **weights** — baixa os pesos do pyannote (~100 MB) usando o token do usuário
+3. **weights**, baixa os pesos do pyannote (~100 MB) usando o token do usuário
 
 Um marcador de versão (`VENV_SCHEMA`) detecta venvs antigos/incompatíveis e os
 reconstrói automaticamente em vez de mostrar um erro Python críptico.
@@ -140,7 +140,7 @@ reconstrói automaticamente em vez de mostrar um erro Python críptico.
 
 O app é open source, então **não** embutimos um token compartilhado. Cada
 usuário cola o seu na primeira execução (`TokenGate` em `FirstRunSetup.jsx`), e
-ele fica salvo em `userData/python/.hf-token` — só na máquina dele.
+ele fica salvo em `userData/python/.hf-token`, só na máquina dele.
 
 ---
 
@@ -168,4 +168,4 @@ Cada estado renderiza uma view (`App.jsx` faz o switch). O design system
 | Modelo fixo `large-v3` | melhor qualidade em nomes próprios/palavras raras; sem tela de config = menos confusão |
 | Modelos baixados em runtime | instalador de ~180 MB em vez de ~3 GB; cabe nos canais de distribuição |
 | Python 3.11 portátil bundlado | venv determinístico nas 3 plataformas; imune ao Python do sistema ser 3.13/3.14 ou inexistente |
-| `torch<2.6` / `huggingface_hub<0.24` | pins necessários por breaking changes upstream — ver comentários no código |
+| `torch<2.6` / `huggingface_hub<0.24` | pins necessários por breaking changes upstream, ver comentários no código |

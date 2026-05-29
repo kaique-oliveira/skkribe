@@ -7,7 +7,7 @@
 #   diarize.py <audio.wav> <hf_token> <whisper_json>
 #              [--num-speakers=N | --min-speakers=N | --max-speakers=N]
 #
-# The whisper JSON is the shape produced by main/index.js — a list of
+# The whisper JSON is the shape produced by main/index.js, a list of
 # segments with .start / .end / .text plus an optional .words array.
 import sys, json, os, warnings
 warnings.filterwarnings("ignore")
@@ -21,7 +21,7 @@ def merge_minor_speakers(diar, min_total_sec=5.0, min_fraction=0.04):
     """
     Catches pyannote's common 'phantom speaker' failure: clustering produces
     N+1 speakers but one of them is barely present (a handful of short turns
-    totaling a few seconds — almost always a misclassified blip of an existing
+    totaling a few seconds, almost always a misclassified blip of an existing
     speaker). Such a speaker inflates the perceived speaker count and steals
     sentences that obviously belong to someone else.
 
@@ -39,7 +39,7 @@ def merge_minor_speakers(diar, min_total_sec=5.0, min_fraction=0.04):
 
     minor = {sp for sp, t in totals.items()
              if t < min_total_sec or (t / grand_total) < min_fraction}
-    # Don't strip everyone — if every speaker is below threshold (very short
+    # Don't strip everyone, if every speaker is below threshold (very short
     # clip), keep the original assignments.
     if not minor or len(minor) >= len(totals):
         return diar
@@ -103,7 +103,7 @@ def speaker_for_range(start, end, diar):
 
 def smooth_word_speakers(speakers, min_run=3):
     """Hysteresis: a run of < min_run consecutive words tagged with speaker X,
-    flanked by two runs of the SAME other speaker Y, is just noise — relabel
+    flanked by two runs of the SAME other speaker Y, is just noise, relabel
     the short run to Y. Strict criterion (both sides must agree) prevents
     overzealous smoothing across genuine speaker changes."""
     if len(speakers) < 2 * min_run + 1: return speakers

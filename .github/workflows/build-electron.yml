@@ -6,8 +6,7 @@ name: Build Electron (Skkribe)
 #   • whisper.cpp binary (built from source via cmake, Metal-enabled on mac)
 #   • Silero VAD model (~864 KB)
 #   • diarize.py (committed in resources/python/diarize.py)
-#   • python-build-standalone runtime (Windows only, ~25 MB) — Mac/Linux use
-#     the system python3
+#   • python-build-standalone runtime (~30 MB) on every platform
 #
 # Downloaded at first launch by the packaged app (runtime-setup.js):
 #   • ggml-large-v3-q5_0.bin   ~1.08 GB
@@ -15,8 +14,8 @@ name: Build Electron (Skkribe)
 #   • pyannote diarization weights              ~100 MB
 #
 # Triggers:
-#   workflow_dispatch — run from the Actions tab.
-#   push tags 'skkribe-v*' — cuts a Release.
+#   workflow_dispatch, run from the Actions tab.
+#   push tags 'skkribe-v*', cuts a Release.
 
 on:
   workflow_dispatch:
@@ -31,7 +30,7 @@ jobs:
       matrix:
         include:
           # macOS is built locally on the maintainer's M-series Mac via
-          # `pnpm run build:mac` — no CI cost. Uncomment the macOS entry to
+          # `pnpm run build:mac`, no CI cost. Uncomment the macOS entry to
           # build it in CI too (note: macOS minutes cost 10x on GitHub).
           - os: windows-latest  # win-x64 NSIS installer
             artifact: skkribe-win
@@ -88,17 +87,17 @@ jobs:
         run: pnpm run setup:python
 
       # ── electron-builder packages everything in resources/ via extraResources
-      - name: Package — macOS
+      - name: Package (macOS)
         if: matrix.os == 'macos-14'
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false   # don't try to code-sign in CI
         run: pnpm exec electron-builder --mac --publish never
 
-      - name: Package — Windows
+      - name: Package (Windows)
         if: matrix.os == 'windows-latest'
         run: pnpm exec electron-builder --win --publish never
 
-      - name: Package — Linux
+      - name: Package (Linux)
         if: matrix.os == 'ubuntu-22.04'
         run: pnpm exec electron-builder --linux --publish never
 

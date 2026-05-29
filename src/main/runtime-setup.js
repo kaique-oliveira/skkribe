@@ -3,14 +3,14 @@
 //
 // Path strategy:
 //
-//   bundledBase()  — read-only, shipped inside the .app/.exe/.AppImage.
+//   bundledBase(), read-only, shipped inside the .app/.exe/.AppImage.
 //                    CI populates this via extraResources:
 //                      • whisper/main(.exe)               ← built from source
 //                      • whisper/ggml-silero-v5.1.2.bin    ← VAD model (~864 KB)
 //                      • python/diarize.py                ← committed in repo
 //                      • python/runtime/ (Windows only)   ← python-build-standalone
 //
-//   userBase()     — writable, lives in app.getPath('userData'). The runtime
+//   userBase(), writable, lives in app.getPath('userData'). The runtime
 //                    setup writes here so the installed app stays signable +
 //                    untouched:
 //                      • models/ggml-large-v3-q5_0.bin    ~1.08 GB
@@ -27,7 +27,7 @@ const https = require('https')
 const { spawn, spawnSync } = require('child_process')
 
 // HuggingFace access token for the gated pyannote.audio repos. Each user
-// supplies their OWN token on first launch (the app is open source — we don't
+// supplies their OWN token on first launch (the app is open source, we don't
 // ship a shared credential). It's saved to userData and reused for every later
 // diarization run. See docs/GETTING_STARTED for how a user creates one.
 const HF_TOKEN_PREFIX = 'hf_'
@@ -100,7 +100,7 @@ function readToken(app) {
 function saveToken(app, token) {
   const t = (token || '').trim()
   if (!t.startsWith(HF_TOKEN_PREFIX)) {
-    throw new Error('Token inválido — deve começar com "hf_". Crie um em huggingface.co/settings/tokens')
+    throw new Error('Token inválido, deve começar com "hf_". Crie um em huggingface.co/settings/tokens')
   }
   const p = paths(app)
   fs.mkdirSync(path.dirname(p.tokenFile), { recursive: true })
@@ -111,12 +111,12 @@ function saveToken(app, token) {
 function findSystemPython(app) {
   // Always prefer the bundled python-build-standalone runtime (shipped on every
   // platform via `pnpm run setup:python`). It's a known-good CPython 3.11, so
-  // torch<2.6 + pyannote install deterministically — no system-Python roulette.
+  // torch<2.6 + pyannote install deterministically, no system-Python roulette.
   const bundled = paths(app).bundledPython
   if (fs.existsSync(bundled)) return bundled
 
   // Fallback (e.g. a dev who hasn't run setup:python yet): pick a system Python
-  // in the 3.10–3.12 range that torch<2.6 has wheels for, preferring explicit
+  // in the 3.10, 3.12 range that torch<2.6 has wheels for, preferring explicit
   // versions over a bare `python3` that might be too new (3.13/3.14).
   const candidates = process.platform === 'win32'
     ? ['py', 'python', 'python3']
@@ -130,7 +130,7 @@ function findSystemPython(app) {
 
 /** Probe whether `python3 -m venv` actually works. On Debian/Ubuntu the venv
  *  module is shipped in a separate `python3-venv` package and isn't installed
- *  by default — calling `python3 -m venv …` then dies with the unhelpful
+ *  by default, calling `python3 -m venv …` then dies with the unhelpful
  *  "ensurepip is not available". Catching that upfront lets us surface a
  *  copy-pasteable apt command instead of a Python traceback. */
 function probeVenvCapable(pythonBin) {
@@ -141,7 +141,7 @@ function probeVenvCapable(pythonBin) {
 }
 
 // Schema version of the python venv layout. Bump when changing the pinned
-// pyannote.audio version, the HF API kwargs, or the base Python interpreter —
+// pyannote.audio version, the HF API kwargs, or the base Python interpreter,
 // a mismatch triggers a venv rebuild instead of leaving the user with a venv
 // built from the wrong/old interpreter.
 const VENV_SCHEMA = '4'
@@ -235,7 +235,7 @@ function runProcess(bin, args, onLine, extraEnv = {}) {
   })
 }
 
-// ── Setup orchestrator — runs only the phases that need running ──────────────
+// ── Setup orchestrator, runs only the phases that need running ──────────────
 async function runSetup(app, emit) {
   const { checks, paths: p } = checkSetup(app)
 
@@ -268,12 +268,12 @@ async function runSetup(app, emit) {
   // ── Phase 2: Python venv + torch + pyannote.audio ──────────────────────────
   if (!checks.pyannoteVenv) {
     // If a venv directory exists but failed the schema check, it was built
-    // by a previous version with incompatible Python deps — nuke it so the
+    // by a previous version with incompatible Python deps, nuke it so the
     // fresh install lands on the current pinned pyannote.audio.
     if (fs.existsSync(p.venvDir)) {
       emit({ phase: 'venv', label: 'Removendo ambiente Python antigo…', percent: 0 })
       fs.rmSync(p.venvDir, { recursive: true, force: true })
-      // Force a re-download of pyannote weights too — they may have been
+      // Force a re-download of pyannote weights too, they may have been
       // produced by an older incompatible HF cache layout.
       try { fs.rmSync(p.setupMarker, { force: true }) } catch (_) {}
     }
@@ -281,8 +281,8 @@ async function runSetup(app, emit) {
     const sysPy = findSystemPython(app)
     if (!sysPy) {
       throw new Error(app.isPackaged
-        ? 'Python portátil não encontrado no app (bug de empacotamento — resources/python/runtime/ ausente).'
-        : 'Python não encontrado. Rode `pnpm run setup:python` para baixar o Python portátil (recomendado), ou instale Python 3.10–3.12 no sistema.')
+        ? 'Python portátil não encontrado no app (bug de empacotamento, resources/python/runtime/ ausente).'
+        : 'Python não encontrado. Rode `pnpm run setup:python` para baixar o Python portátil (recomendado), ou instale Python 3.10, 3.12 no sistema.')
     }
     // Catch missing python3-venv on Debian/Ubuntu before we hit a confusing
     // "ensurepip is not available" error mid-create. The bundled python always
@@ -298,7 +298,7 @@ async function runSetup(app, emit) {
     // --clear wipes any half-built venv contents so a retry starts clean.
     await runProcess(sysPy, ['-m', 'venv', '--clear', p.venvDir], (l) => emit({ phase: 'venv', label: l, percent: 0.1 }))
 
-    // Use `python -m pip` rather than the pip launcher binary — the binary can
+    // Use `python -m pip` rather than the pip launcher binary, the binary can
     // be missing/broken on a freshly-created venv, but the module is always there.
     emit({ phase: 'venv', label: 'Atualizando pip…', percent: 0.15 })
     await runProcess(p.venvPython, ['-m', 'pip', 'install', '--upgrade', 'pip', '--quiet'])
@@ -316,7 +316,7 @@ async function runSetup(app, emit) {
 
     emit({ phase: 'venv', label: 'Instalando pyannote.audio (~500 MB)…', percent: 0.7 })
     // pyannote.audio 3.3.x still passes `use_auth_token=` through to
-    // hf_hub_download() — huggingface_hub 0.24+ removed that kwarg entirely,
+    // hf_hub_download(), huggingface_hub 0.24+ removed that kwarg entirely,
     // so we pin huggingface_hub to the last branch that accepts it as a
     // (deprecated but functional) alias for token=. Updating once pyannote
     // upstream fixes the forwarding will let us drop both pins.

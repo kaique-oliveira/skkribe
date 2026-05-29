@@ -4,10 +4,10 @@ import { StatusPill } from '../components/StatusPill'
 import { PrimaryButton, LinkButton } from '../components/Buttons'
 
 // First-launch flow:
-//   1. Token gate — the user pastes their own HuggingFace token (the app is
+//   1. Token gate, the user pastes their own HuggingFace token (the app is
 //      open source, so we never ship a shared credential). Skipped if a token
 //      was already saved on a previous launch.
-//   2. Auto-setup — downloads the whisper model (~1 GB), creates the Python
+//   2. Auto-setup, downloads the whisper model (~1 GB), creates the Python
 //      venv, installs torch + pyannote, and pre-caches the diarization weights.
 //
 // Phases mirror runtime-setup.js → emit({ phase, label, percent }).
@@ -230,7 +230,7 @@ function SetupProgress({ onComplete, onFail }) {
       <PopIn delay={0.05}>
         <div className="text-center space-y-1.5">
           <h1 className="text-[22px] font-bold text-ink-1">Configurando Skkribe</h1>
-          <p className="text-[13px] text-ink-2">Só na primeira vez — depois fica salvo.</p>
+          <p className="text-[13px] text-ink-2">Só na primeira vez, depois fica salvo.</p>
         </div>
       </PopIn>
 

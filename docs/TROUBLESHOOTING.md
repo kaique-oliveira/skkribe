@@ -6,7 +6,7 @@ Erros comuns e como resolver, separados por contexto.
 
 ## No app (uso normal)
 
-### "Token inválido — deve começar com hf_"
+### "Token inválido: deve começar com hf_"
 
 Você colou algo que não é um token HuggingFace. Tokens da HF sempre começam com
 `hf_`. **Não use** chaves de outros serviços (OpenAI `sk_...`, pyannote.ai, etc).
@@ -25,7 +25,7 @@ Depois reabra o app.
 
 ### Download dos modelos interrompido / "Download incompleto"
 
-Conexão caiu no meio. O app guarda o progresso e retoma — só **reabrir** e ele
+Conexão caiu no meio. O app guarda o progresso e retoma, só **reabrir** e ele
 continua de onde parou.
 
 ### A transcrição achou pessoas demais / de menos
@@ -39,7 +39,7 @@ escolha "1 pessoa" (pula a diarização inteira).
 Esperado. Sem GPU Apple, o pyannote roda na CPU (~1x a 2x a duração do áudio).
 No Mac (Apple Silicon) é bem mais rápido porque usa o Metal. Se você tem GPU
 NVIDIA, dá pra acelerar reinstalando o PyTorch com CUDA dentro do venv
-(`userData/python/venv`) — avançado.
+(`userData/python/venv`), avançado.
 
 ---
 
@@ -48,7 +48,7 @@ NVIDIA, dá pra acelerar reinstalando o PyTorch com CUDA dentro do venv
 ### "Python portátil não encontrado" / "python3 não encontrado"
 
 O app traz o próprio Python embutido, então isso só acontece se o build não
-incluiu o runtime. **No app instalado:** é bug de empacotamento — reporte uma
+incluiu o runtime. **No app instalado:** é bug de empacotamento, reporte uma
 issue. **Rodando do código (dev):** você esqueceu de rodar `pnpm run setup:python`.
 
 ### AppImage não abre / "dlopen(): error loading libfuse.so.2"
@@ -105,7 +105,7 @@ Confirme que o `asarUnpack` em `package.json` inclui
 
 ### "The job was not started because recent account payments have failed..."
 
-Não é erro de código — é cota de minutos do GitHub Actions. Opções:
+Não é erro de código, é cota de minutos do GitHub Actions. Opções:
 
 - Aumentar o spending limit em github.com/settings/billing
 - Tornar o repositório **público** (Actions grátis ilimitado)
@@ -124,12 +124,12 @@ novo, use **"Run workflow"** (dispatch) na branch, ou faça um push novo.
 ## Resetar tudo (começar do zero)
 
 Se o setup ficou num estado quebrado, delete a pasta de dados do usuário e
-reabra o app — ele refaz o setup:
+reabra o app, ele refaz o setup:
 
 - **macOS:** `~/Library/Application Support/skkribe/`
 - **Windows:** `%APPDATA%\skkribe\`
 - **Linux:** `~/.config/skkribe/`
 
 > Em **dev** (rodando do código), os dados ficam em `resources/` no próprio
-> repositório — apague `resources/python/venv`, `resources/python/hf_cache`,
+> repositório, apague `resources/python/venv`, `resources/python/hf_cache`,
 > `resources/python/.hf-token` e `resources/whisper/models`.

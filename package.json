@@ -1,7 +1,7 @@
 {
   "name": "skkribe",
   "version": "1.0.0",
-  "description": "Skkribe — 100% local audio transcription + speaker diarization (whisper.cpp + pyannote.audio) in a cross-platform Electron app.",
+  "description": "Skkribe: 100% local audio transcription + speaker diarization (whisper.cpp + pyannote.audio) in a cross-platform Electron app.",
   "main": "src/main/index.js",
   "license": "MIT",
   "author": "Kaique Oliveira",

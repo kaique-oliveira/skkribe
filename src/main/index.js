@@ -1,4 +1,4 @@
-// Skkribe — Electron main process.
+// Skkribe, Electron main process.
 //
 // Backend strategy proven by the original Skkribe electron build:
 //   ffmpeg → split into N-second chunks → whisper.cpp transcribes chunks in
@@ -17,7 +17,7 @@ const runtimeSetup = require('./runtime-setup')
 // Bundled static ffmpeg binary. When the .app is launched from Finder it
 // inherits a minimal PATH that doesn't include /opt/homebrew/bin, so a bare
 // `ffmpeg` spawn ENOENTs. ffmpeg-static ships the binary in node_modules and
-// returns its absolute path — works in both dev and packaged mode.
+// returns its absolute path, works in both dev and packaged mode.
 const FFMPEG_PATH = (() => {
   const p = require('ffmpeg-static')
   if (!app.isPackaged) return p
@@ -30,7 +30,7 @@ const FFMPEG_PATH = (() => {
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
-// Pipeline constants. Quality-over-speed defaults baked in — the user no longer
+// Pipeline constants. Quality-over-speed defaults baked in, the user no longer
 // chooses the model. `large-v3` is the best whisper variant for proper nouns
 // and rare words; if it's not on disk the transcribe handler falls back to
 // whatever IS downloaded (turbo, medium, small) via the size-sorted lookup.
@@ -41,7 +41,7 @@ const PIPELINE = Object.freeze({
 })
 
 // Per-subprocess timeouts. Whisper.cpp on CPU runs about real-time per chunk,
-// so 10 min per 60s chunk is ~10× slowdown headroom — anything beyond that is
+// so 10 min per 60s chunk is ~10× slowdown headroom, anything beyond that is
 // a genuine hang (corrupted audio, OS locking, etc). Pyannote on CPU is
 // ~1× realtime; for a 4-hour audio cap it at 6 hours.
 const TIMEOUTS = Object.freeze({
@@ -49,7 +49,7 @@ const TIMEOUTS = Object.freeze({
   diarizeMs:   6 * 60 * 60 * 1000,    // pyannote on the full WAV
 })
 
-/** Whisper benefits from 2–4 threads per process; below 2 it leaves cores
+/** Whisper benefits from 2, 4 threads per process; below 2 it leaves cores
  *  idle, above 4 hits diminishing returns. Balance worker count × per-worker
  *  threads to keep both above-floor while saturating the CPU.
  *
@@ -73,7 +73,7 @@ function balanceParallelism(cores, chunkCount) {
 
 // ── ffmpeg helpers ────────────────────────────────────────────────────────────
 
-/** Convert any input into 16 kHz mono PCM WAV — the shape whisper + pyannote want. */
+/** Convert any input into 16 kHz mono PCM WAV, the shape whisper + pyannote want. */
 function convertToWav(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
     const ff = spawn(FFMPEG_PATH, [
@@ -160,7 +160,7 @@ function transcribeChunk(whisperBin, vadModel, modelPath, wavPath, threads, chun
     const proc = spawn(whisperBin, args)
     const killTimer = setTimeout(() => {
       try { proc.kill('SIGKILL') } catch (_) {}
-      reject(new Error(`whisper travou em ${path.basename(wavPath)} (>10 min) — áudio corrompido?`))
+      reject(new Error(`whisper travou em ${path.basename(wavPath)} (>10 min), áudio corrompido?`))
     }, TIMEOUTS.perChunkMs)
     proc.stderr.on('data', d => { stderr += d.toString() })
     proc.on('close', code => {
@@ -359,7 +359,7 @@ ipcMain.handle('shell:open-external', async (_e, url) => {
 // Frontend hint `expectedSpeakers` is forwarded to diarize.py as a kwarg:
 //   null     → auto (pyannote picks)
 //   1        → skip diarization, attribute everything to one speaker
-//   >=2      → num_speakers=N (HARD constraint — soft hints like min_speakers
+//   >=2      → num_speakers=N (HARD constraint, soft hints like min_speakers
 //              let pyannote drift to N+1 phantoms in side-by-side tests)
 ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
   const send = (msg) => event.sender.send('transcribe:progress', msg)
@@ -412,7 +412,7 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
       (msg) => send({ phase: 'transcribing', message: msg })
     )
 
-    // Drop the chunk files — keep the full WAV for pyannote.
+    // Drop the chunk files, keep the full WAV for pyannote.
     try {
       chunks.forEach(c => { try { fs.unlinkSync(c) } catch (_) {} })
       fs.rmdirSync(tmpDir)
@@ -420,7 +420,7 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
 
     // Short-circuit single-speaker mode.
     if (expectedSpeakers === 1) {
-      send({ phase: 'merging', message: 'Modo monólogo — sem diarização.' })
+      send({ phase: 'merging', message: 'Modo monólogo, sem diarização.' })
       const final = whisperSegments
         .filter(s => s.text)
         .map(s => ({ start: s.start, end: s.end, speaker: 'Pessoa 1', text: s.text }))
@@ -430,7 +430,7 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
 
     // 4. Run pyannote on full WAV with whisper segments + words as input.
     //    Word-level data unlocks per-word speaker assignment with hysteresis
-    //    inside diarize.py — much more accurate than the old segment-level
+    //    inside diarize.py, much more accurate than the old segment-level
     //    matching when whisper segments straddle real speaker changes.
     send({ phase: 'diarizing', message: 'pyannote: identificando vozes…' })
     const segJson = path.join(os.tmpdir(), `skkribe_segs_${ts}.json`)
@@ -462,7 +462,7 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
       })
       const diarKill = setTimeout(() => {
         try { proc.kill('SIGKILL') } catch (_) {}
-        reject(new Error('pyannote travou (>6h) — provavelmente áudio muito longo ou corrompido'))
+        reject(new Error('pyannote travou (>6h), provavelmente áudio muito longo ou corrompido'))
       }, TIMEOUTS.diarizeMs)
       proc.stdout.on('data', d => { stdout += d.toString() })
       proc.stderr.on('data', d => {
@@ -477,7 +477,7 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
         // some pyannote/torch combos leak deprecation warnings or torchaudio
         // backend notices to stdout before that. Walk lines from the END
         // looking for the first one that parses as JSON and has either a
-        // "segments" array or an "error" field — that's our payload.
+        // "segments" array or an "error" field, that's our payload.
         const lines = stdout.split('\n').map(l => l.trim()).filter(Boolean)
         let parsed = null
         for (let i = lines.length - 1; i >= 0; i--) {

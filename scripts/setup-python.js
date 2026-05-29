@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * setup-python.js — downloads a self-contained, relocatable CPython 3.11 from
+ * setup-python.js, downloads a self-contained, relocatable CPython 3.11 from
  * python-build-standalone into resources/python/runtime/ for the CURRENT
  * platform + arch.
  *
@@ -8,14 +8,14 @@
  *   The diarization stack (pyannote.audio + torch) is extremely sensitive to
  *   the Python version. We pin torch<2.6 (to keep the pre-2.6 torch.load
  *   default that pyannote checkpoints rely on), and torch<2.6 only ships
- *   wheels for Python 3.9–3.12. A user (or CI runner) whose system `python3`
- *   is 3.13/3.14 — or missing python3-venv — would fail. Shipping our own
+ *   wheels for Python 3.9, 3.12. A user (or CI runner) whose system `python3`
+ *   is 3.13/3.14, or missing python3-venv, would fail. Shipping our own
  *   3.11 makes the venv deterministic and identical on macOS, Windows, Linux.
  *
  * The release tags are date-based and rotate, so instead of hardcoding one we
  * query the GitHub API for the latest release and pick the matching 3.11 asset.
  *
- * Run: pnpm run setup:python   (idempotent — skips if already present)
+ * Run: pnpm run setup:python   (idempotent, skips if already present)
  */
 
 const fs = require('node:fs')
@@ -48,7 +48,7 @@ function runtimePythonPath() {
 
 function ghHeaders() {
   const h = { 'user-agent': 'skkribe-setup', accept: 'application/vnd.github+json' }
-  // CI provides GITHUB_TOKEN — use it to dodge the 60 req/h anonymous limit.
+  // CI provides GITHUB_TOKEN, use it to dodge the 60 req/h anonymous limit.
   if (process.env.GITHUB_TOKEN) h.authorization = `Bearer ${process.env.GITHUB_TOKEN}`
   return h
 }
@@ -112,10 +112,10 @@ function download(url, dest) {
 }
 
 async function main() {
-  console.log(`\n🐍 setup-python.js — CPython ${PY_MINOR} portátil (${process.platform}-${process.arch})`)
+  console.log(`\n🐍 setup-python.js, CPython ${PY_MINOR} portátil (${process.platform}-${process.arch})`)
 
   if (fs.existsSync(runtimePythonPath())) {
-    console.log('✓ Python portátil já presente em', RUNTIME_DIR, '— pulando')
+    console.log('✓ Python portátil já presente em', RUNTIME_DIR, ', pulando')
     return
   }
 
@@ -146,7 +146,7 @@ async function main() {
   try { fs.unlinkSync(tarball) } catch (_) {}
 
   if (!fs.existsSync(runtimePythonPath())) {
-    throw new Error(`extração falhou — ${runtimePythonPath()} não existe`)
+    throw new Error(`extração falhou, ${runtimePythonPath()} não existe`)
   }
   console.log('✅ Python portátil pronto em', runtimePythonPath())
 }

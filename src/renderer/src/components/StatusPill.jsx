@@ -1,4 +1,4 @@
-// Semantic status chip — pill background + tonal text + optional icon on the left.
+// Semantic status chip, pill background + tonal text + optional icon on the left.
 // Mirrors Views/Components/StatusPill.swift kinds: positive | critical | warning |
 // info | secondary | neutral.
 
@@ -21,7 +21,7 @@ export function StatusPill({ label, icon, kind = 'neutral' }) {
   )
 }
 
-/** Filled icon badge — used for prominent status markers (record dot, error). */
+/** Filled icon badge, used for prominent status markers (record dot, error). */
 export function IconBadge({ children, fill = '#DC2626', size = 28 }) {
   return (
     <div
@@ -33,7 +33,7 @@ export function IconBadge({ children, fill = '#DC2626', size = 28 }) {
   )
 }
 
-/** Pulsing red dot — the recording-app affordance. */
+/** Pulsing red dot, the recording-app affordance. */
 export function RecordDot({ size = 10 }) {
   return (
     <span className="relative inline-flex">

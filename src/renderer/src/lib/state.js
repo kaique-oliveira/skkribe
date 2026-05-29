@@ -1,4 +1,4 @@
-// Single-source app state — analog of Models/AppState.swift.
+// Single-source app state, analog of Models/AppState.swift.
 //
 // State machine:
 //   loading → firstRun? → idle
@@ -48,7 +48,7 @@ export function useAppState() {
 
   const [speakerNames, setSpeakerNames] = useState({})
 
-  // Wall-clock timer — running while status==='working'.
+  // Wall-clock timer, running while status==='working'.
   useEffect(() => {
     if (status !== STATUS.working) return
     const id = setInterval(() => setElapsed((e) => e + 1), 1000)

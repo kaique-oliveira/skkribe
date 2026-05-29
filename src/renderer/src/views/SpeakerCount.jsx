@@ -4,7 +4,7 @@ import { IconArrowRight, IconPersonWave, IconUserOne, IconUsersTwo, IconUsersThr
 
 // Each option becomes a HARD speaker-count constraint passed to pyannote
 // (except "Não sei", which lets it auto-detect). We learned the hard way that
-// soft hints like `min_speakers=N` let pyannote drift to N+1 phantoms — exact
+// soft hints like `min_speakers=N` let pyannote drift to N+1 phantoms, exact
 // counts produce consistently better results.
 const OPTIONS = [
   { count: null, title: 'Não sei',  subtitle: 'Deixa a IA detectar automaticamente',     icon: <IconSparkles />,   tint: '#6B6B70' },

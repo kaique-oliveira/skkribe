@@ -18,11 +18,11 @@ winget install OpenJS.NodeJS.LTS
 # Git
 winget install Git.Git
 
-# Ferramentas de compilação C++ (MSVC + CMake) — necessário pro whisper.cpp
+# Ferramentas de compilação C++ (MSVC + CMake): necessário pro whisper.cpp
 winget install Microsoft.VisualStudio.2022.BuildTools
 ```
 
-> Você **não** precisa instalar Python — o Skkribe baixa e empacota um Python
+> Você **não** precisa instalar Python, o Skkribe baixa e empacota um Python
 > 3.11 portátil próprio (passo 4 abaixo).
 
 > Ao instalar o **Visual Studio Build Tools**, na tela de componentes marque
@@ -70,14 +70,14 @@ Isso compila com o MSVC (modo CPU/AVX2) e baixa o modelo VAD. ~3-5 min.
 O binário vai pra `resources\whisper\main.exe`.
 
 > Se der erro de `cmake não encontrado`, abra o **"Developer PowerShell for VS 2022"**
-> (vem com o Build Tools) em vez do PowerShell comum — ele já tem o ambiente
+> (vem com o Build Tools) em vez do PowerShell comum, ele já tem o ambiente
 > MSVC carregado.
 
 ---
 
 ## 4. Baixar o Python portátil (vai dentro do instalador)
 
-O app empacotado não depende do Python do usuário — ele traz um Python próprio.
+O app empacotado não depende do Python do usuário, ele traz um Python próprio.
 
 ```powershell
 pnpm run setup:python
@@ -96,7 +96,7 @@ pnpm run build:win
 
 Resultado em `dist\`:
 
-- `Skkribe Setup 1.0.0.exe` — instalador (distribua este)
+- `Skkribe Setup 1.0.0.exe`: instalador (distribua este)
 
 ---
 
@@ -115,7 +115,7 @@ Resultado em `dist\`:
 | Erro | Solução |
 |---|---|
 | `cmake não encontrado` | use o "Developer PowerShell for VS 2022", ou reinstale o Build Tools marcando "Desktop development with C++" |
-| `whisper-cli.exe não encontrado` | a compilação falhou antes — role o log do `setup:whisper` pra ver o erro real |
+| `whisper-cli.exe não encontrado` | a compilação falhou antes, role o log do `setup:whisper` pra ver o erro real |
 | `python.exe` não existe em runtime | refaça o passo 4 (download do Python portátil) |
 
 Mais em [TROUBLESHOOTING.md](TROUBLESHOOTING.md).

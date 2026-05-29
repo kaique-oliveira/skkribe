@@ -1,6 +1,6 @@
 # Contribuindo
 
-Obrigado pelo interesse! O Skkribe é MIT — sinta-se livre pra fazer fork,
+Obrigado pelo interesse! O Skkribe é MIT, sinta-se livre pra fazer fork,
 estudar, modificar e mandar melhorias.
 
 ---
@@ -32,7 +32,7 @@ Na primeira `pnpm run dev` o app pede seu token HuggingFace e baixa os modelos
 
 ## Estrutura do código
 
-Leia [ARCHITECTURE.md](ARCHITECTURE.md) primeiro — explica a separação
+Leia [ARCHITECTURE.md](ARCHITECTURE.md) primeiro, explica a separação
 main/renderer, a pipeline e as decisões de design.
 
 Resumo de onde mexer:
@@ -64,7 +64,7 @@ Resumo de onde mexer:
 
 - **Idioma da UI:** português (pt-BR). Comentários de código em inglês são ok.
 - **Commits:** mensagens descritivas explicando o *porquê*, não só o *o quê*.
-- **Sem dependências pesadas novas** sem discussão — o objetivo é manter o
+- **Sem dependências pesadas novas** sem discussão, o objetivo é manter o
   instalador enxuto.
 - **Não comite** modelos, venv, binários ou tokens (já estão no `.gitignore`).
 

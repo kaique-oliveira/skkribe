@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * setup-whisper.js — clones whisper.cpp at a stable tag, builds the `main`
+ * setup-whisper.js, clones whisper.cpp at a stable tag, builds the `main`
  * binary with Metal (macOS) or Vulkan/CUDA-disabled (others), and drops it
  * into resources/whisper/main. Bundled by electron-builder via extraResources.
  *
@@ -40,10 +40,10 @@ function ensureCmake() {
 }
 
 async function main() {
-  console.log('\n🔧 setup-whisper.js — building whisper.cpp', WHISPER_TAG)
+  console.log('\n🔧 setup-whisper.js, building whisper.cpp', WHISPER_TAG)
 
   if (existing() === WHISPER_TAG) {
-    console.log('✓ Já está na versão', WHISPER_TAG, '— pulando build')
+    console.log('✓ Já está na versão', WHISPER_TAG, ', pulando build')
     return
   }
   ensureCmake()
@@ -60,7 +60,7 @@ async function main() {
     run(`git -C "${BUILD_DIR}" checkout ${WHISPER_TAG}`)
   }
 
-  // Build flags — Metal on macOS, plain Accelerate elsewhere. CoreML is intentionally
+  // Build flags, Metal on macOS, plain Accelerate elsewhere. CoreML is intentionally
   // OFF here because Electron ships cross-platform and we don't want a Mac-only model
   // requirement. Users on Mac who want ANE speed can switch to the native Swift port.
   const isMac = process.platform === 'darwin'
@@ -96,7 +96,7 @@ async function main() {
   fs.writeFileSync(VERSION_MARKER, WHISPER_TAG)
   console.log('\n✅ whisper.cpp pronto em', dstBin)
 
-  // ── Silero VAD — required by --vad in the pipeline.
+  // ── Silero VAD, required by --vad in the pipeline.
   // Without it the transcriber hallucinates "Legenda por…" / "[Música]" in
   // silent regions, which then poisons the diarization downstream.
   if (!fs.existsSync(VAD_BIN)) {
@@ -110,7 +110,7 @@ async function main() {
 
 /** Promise-based HTTPS download with redirect follow + atomic .part rename.
  *  The old implementation kicked off https.get and then sat in a sync `while +
- *  execSync('sleep')` polling loop — which blocks the Node event loop and
+ *  execSync('sleep')` polling loop, which blocks the Node event loop and
  *  prevents the response callback from ever firing. Deadlock in CI (locally
  *  the existing VAD file made the code path short-circuit). */
 function downloadFile(url, dest) {

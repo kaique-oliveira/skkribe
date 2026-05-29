@@ -21,7 +21,7 @@ xcode-select --install
 ```
 
 ```bash
-# Homebrew — gerenciador de programas do Mac (se ainda não tiver)
+# Homebrew: gerenciador de programas do Mac (se ainda não tiver)
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
@@ -30,7 +30,7 @@ xcode-select --install
 brew install cmake node pnpm
 ```
 
-> Você **não** precisa instalar Python — o Skkribe baixa e empacota um Python
+> Você **não** precisa instalar Python, o Skkribe baixa e empacota um Python
 > 3.11 portátil próprio (passo 3 abaixo).
 
 ### Para quem já tem ambiente
@@ -76,8 +76,8 @@ pnpm run build:mac
 
 Quando terminar, os arquivos estão em `dist/`:
 
-- `Skkribe-1.0.0-arm64.dmg` — instalador (distribua este)
-- `Skkribe-1.0.0-arm64-mac.zip` — versão portátil
+- `Skkribe-1.0.0-arm64.dmg`: instalador (distribua este)
+- `Skkribe-1.0.0-arm64-mac.zip`: versão portátil
 
 ---
 
@@ -86,9 +86,9 @@ Quando terminar, os arquivos estão em `dist/`:
 - **App não assinado:** o build não tem certificado de desenvolvedor Apple, então
   ao abrir pela primeira vez o usuário precisa de **botão direito → Abrir**. Pra
   distribuir sem esse aviso, você precisaria de uma conta Apple Developer (US$99/ano)
-  e configurar `notarize` — fora do escopo deste projeto.
+  e configurar `notarize`, fora do escopo deste projeto.
 - **ffmpeg** vem embutido (pacote `ffmpeg-static`), não precisa instalar.
-- O `dist/` é regenerável e está no `.gitignore` — não comite.
+- O `dist/` é regenerável e está no `.gitignore`, não comite.
 
 ---
 

@@ -1,4 +1,4 @@
-// Preload — exposes a small typed-ish surface to the renderer via window.skkribe.
+// Preload, exposes a small typed-ish surface to the renderer via window.skkribe.
 // Anything beyond this set is unreachable from the renderer's React code.
 
 const { contextBridge, ipcRenderer } = require('electron')

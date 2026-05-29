@@ -4,7 +4,7 @@ Gera o `Skkribe-1.0.0.AppImage` para x64. O AppImage é um único arquivo
 executável que roda em praticamente qualquer distro, sem instalação.
 
 > Os comandos abaixo usam `apt` (Ubuntu/Debian). Em Fedora/Arch troque o
-> gerenciador de pacotes — as ferramentas têm os mesmos nomes.
+> gerenciador de pacotes, as ferramentas têm os mesmos nomes.
 
 ---
 
@@ -17,11 +17,11 @@ executável que roda em praticamente qualquer distro, sem instalação.
 sudo apt update
 sudo apt install -y build-essential cmake git
 
-# FUSE — necessário pra RODAR AppImages (e pro próprio app gerado abrir)
+# FUSE: necessário pra RODAR AppImages (e pro próprio app gerado abrir)
 sudo apt install -y libfuse2
 ```
 
-> Você **não** precisa instalar Python — o Skkribe baixa e empacota um Python
+> Você **não** precisa instalar Python, o Skkribe baixa e empacota um Python
 > 3.11 portátil próprio (passo 3 abaixo). Isso vale também pro usuário final:
 > o AppImage roda sem Python no sistema.
 
@@ -77,7 +77,7 @@ pnpm run build:linux
 
 Resultado em `dist/`:
 
-- `Skkribe-1.0.0.AppImage` — distribua este
+- `Skkribe-1.0.0.AppImage`: distribua este
 
 Pra testar localmente:
 
@@ -91,7 +91,7 @@ chmod +x dist/Skkribe-1.0.0.AppImage
 ## Notas
 
 - **Python vai embutido no AppImage** (CPython 3.11 portátil), igual nas outras
-  plataformas — o usuário final **não** precisa de Python instalado.
+  plataformas, o usuário final **não** precisa de Python instalado.
 - **ffmpeg** vem embutido (`ffmpeg-static`).
 - **Wayland:** se a janela não abrir corretamente em algumas distros com
   Wayland, rode com `--ozone-platform=x11` ou exporte

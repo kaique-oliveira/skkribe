@@ -127,7 +127,7 @@ export function App() {
       {/* Top region acts as the macOS drag handle (hiddenInset title bar) and leaves room for traffic lights. */}
       <div className="h-7 drag-region shrink-0" />
 
-      {/* Cross-fade between views — the per-view PopIn modifiers on individual
+      {/* Cross-fade between views, the per-view PopIn modifiers on individual
           elements handle the rich entrance choreography; this wrapper just
           smooths the transition. Mode='wait' avoids double-mount layout shifts. */}
       <div className="flex-1 overflow-y-auto pt-1 relative">

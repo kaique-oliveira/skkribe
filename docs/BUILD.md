@@ -10,11 +10,11 @@ plataforma. Se você só quer o comando, pula pra tabela no fim.
 O Skkribe é um app Electron, mas ele depende de dois "motores" nativos que
 **não são JavaScript**:
 
-1. **whisper.cpp** — um binário em C++ que precisa ser **compilado** pra cada
+1. **whisper.cpp**: um binário em C++ que precisa ser **compilado** pra cada
    sistema operacional e arquitetura. Não dá pra pegar o binário do Mac e rodar
    no Windows.
-2. **pyannote.audio** — roda em Python. O ambiente Python é grande (~1,5 GB com
-   o PyTorch), então **não vai dentro do instalador** — o app baixa e monta na
+2. **pyannote.audio**: roda em Python. O ambiente Python é grande (~1,5 GB com
+   o PyTorch), então **não vai dentro do instalador**, o app baixa e monta na
    primeira execução.
 
 Por isso a regra de ouro:
@@ -23,7 +23,7 @@ Por isso a regra de ouro:
 > Você não consegue gerar um `.exe` do Windows estando no Mac (o whisper.cpp
 > seria compilado pra Mac).
 
-### O que VAI dentro do instalador (~180–230 MB)
+### O que VAI dentro do instalador (~180 a 230 MB)
 
 | Item | De onde vem |
 |---|---|
@@ -35,8 +35,8 @@ Por isso a regra de ouro:
 
 > **Por que bundlar o Python?** O pyannote.audio + torch são sensíveis à versão
 > do Python (precisamos de `torch<2.6`, que só tem wheels até o 3.12). Em vez de
-> depender do Python do sistema do usuário — que pode ser 3.13/3.14 ou nem
-> existir — embarcamos um CPython 3.11 portátil idêntico nos três sistemas.
+> depender do Python do sistema do usuário, que pode ser 3.13/3.14 ou nem
+> existir, embarcamos um CPython 3.11 portátil idêntico nos três sistemas.
 
 ### O que o app baixa SOZINHO na primeira execução (~2,7 GB)
 
@@ -48,7 +48,7 @@ Isso mantém o instalador pequeno e funciona igual nas três plataformas.
 
 ---
 
-## Opção A — Build local (na sua máquina)
+## Opção A: Build local (na sua máquina)
 
 Escolha o guia da sua plataforma:
 
@@ -62,11 +62,11 @@ Os arquivos saem na pasta `dist/`.
 
 ---
 
-## Opção B — Build automático (GitHub Actions)
+## Opção B: Build automático (GitHub Actions)
 
 O repositório tem um workflow em
 [`.github/workflows/build-electron.yml`](../.github/workflows/build-electron.yml)
-que compila nas três plataformas em paralelo, em servidores do GitHub — você não
+que compila nas três plataformas em paralelo, em servidores do GitHub, você não
 precisa ter Windows/Linux fisicamente.
 
 **Como disparar:**
@@ -78,7 +78,7 @@ Os instaladores ficam disponíveis como **artifacts** da execução (14 dias).
 
 > **Nota:** o workflow vem configurado pra buildar **só Windows** por padrão
 > (pra economizar minutos de CI). Pra ligar Mac e Linux, descomente as linhas
-> no `matrix` do arquivo do workflow — está comentado e explicado lá.
+> no `matrix` do arquivo do workflow, está comentado e explicado lá.
 
 > **Atenção a custos:** builds de macOS no GitHub Actions consomem **10x** mais
 > minutos da cota grátis que Linux. Se sua conta estourar a cota, os jobs nem

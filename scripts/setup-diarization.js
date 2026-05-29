@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * setup-diarization.js — sets up an isolated Python venv with pyannote.audio
+ * setup-diarization.js, sets up an isolated Python venv with pyannote.audio
  * + PyTorch CPU and pre-downloads the pyannote/speaker-diarization-3.1 model
  * weights. Same architecture as the original Skkribe-electron build.
  *
@@ -35,7 +35,7 @@ const DIARIZE_SCRIPT = `#!/usr/bin/env python3
 #   diarize.py <audio.wav> <hf_token> <whisper_json>
 #              [--num-speakers=N | --min-speakers=N | --max-speakers=N]
 #
-# The whisper JSON is the shape produced by main/index.js — a list of
+# The whisper JSON is the shape produced by main/index.js, a list of
 # segments with .start / .end / .text plus an optional .words array.
 import sys, json, os, warnings
 warnings.filterwarnings("ignore")
@@ -49,7 +49,7 @@ def merge_minor_speakers(diar, min_total_sec=5.0, min_fraction=0.04):
     """
     Catches pyannote's common 'phantom speaker' failure: clustering produces
     N+1 speakers but one of them is barely present (a handful of short turns
-    totaling a few seconds — almost always a misclassified blip of an existing
+    totaling a few seconds, almost always a misclassified blip of an existing
     speaker). Such a speaker inflates the perceived speaker count and steals
     sentences that obviously belong to someone else.
 
@@ -129,7 +129,7 @@ def speaker_for_range(start, end, diar):
 
 def smooth_word_speakers(speakers, min_run=3):
     """Hysteresis: a run of < min_run consecutive words tagged with speaker X,
-    flanked by two runs of the SAME other speaker Y, is just noise — relabel
+    flanked by two runs of the SAME other speaker Y, is just noise, relabel
     the short run to Y. Strict criterion (both sides must agree) prevents
     overzealous smoothing across genuine speaker changes."""
     if len(speakers) < 2 * min_run + 1: return speakers
@@ -299,7 +299,7 @@ function getPython() {
 }
 
 function main() {
-  console.log('\n🔧 setup-diarization.js — pyannote.audio venv + model\n')
+  console.log('\n🔧 setup-diarization.js, pyannote.audio venv + model\n')
 
   const tokenArg = process.argv.find((a) => a.startsWith('--token='))
   const hfToken  = tokenArg && tokenArg.slice('--token='.length).trim()
@@ -313,7 +313,7 @@ function main() {
   // with `hf_`. Failing fast here saves a 2 GB torch download + venv build for
   // nothing.
   if (!hfToken.startsWith('hf_')) {
-    console.error('❌ Token inválido — formato esperado: hf_xxxxxxxx (Hugging Face).')
+    console.error('❌ Token inválido, formato esperado: hf_xxxxxxxx (Hugging Face).')
     console.error(`   Você passou: ${hfToken.slice(0, 8)}…  (prefixo errado)`)
     console.error('')
     console.error('   Crie um token grátis em:  https://huggingface.co/settings/tokens')

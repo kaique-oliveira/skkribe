@@ -4,7 +4,7 @@
 
 # Skkribe
 
-**Transcrição de áudio + identificação de quem falou — 100% no seu computador.**
+**Transcrição de áudio + identificação de quem falou, 100% no seu computador.**
 
 Sem nuvem, sem conta paga, sem enviar seu áudio pra lugar nenhum.
 Roda em macOS, Windows e Linux.
@@ -34,8 +34,8 @@ Dá pra renomear as pessoas, copiar a fala de cada uma, e exportar tudo em Markd
 
 **Tudo processado localmente** usando dois projetos open source de ponta:
 
-- [**whisper.cpp**](https://github.com/ggml-org/whisper.cpp) — transcrição (modelo `large-v3` da OpenAI, o melhor pra nomes próprios e palavras raras)
-- [**pyannote.audio**](https://github.com/pyannote/pyannote-audio) — identificação de falantes (diarização)
+- [**whisper.cpp**](https://github.com/ggml-org/whisper.cpp): transcrição (modelo `large-v3` da OpenAI, o melhor pra nomes próprios e palavras raras)
+- [**pyannote.audio**](https://github.com/pyannote/pyannote-audio): identificação de falantes (diarização)
 
 ---
 
@@ -49,7 +49,7 @@ Dá pra renomear as pessoas, copiar a fala de cada uma, e exportar tudo em Markd
    - **Windows** → `.exe`
    - **Linux** → `.AppImage`
 2. Instale e abra normalmente.
-3. Na primeira vez, o app pede um **token gratuito da HuggingFace** (≈2 min — o
+3. Na primeira vez, o app pede um **token gratuito da HuggingFace** (≈2 min, o
    guia aparece na tela) e baixa os modelos automaticamente (~2,7 GB, uma vez só).
 4. Pronto. Da próxima vez abre direto.
 
@@ -99,10 +99,10 @@ de design? Está tudo em [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md).
 |---|---|---|
 | [Node.js](https://nodejs.org) | 20+ | rodar o Electron + Vite |
 | [pnpm](https://pnpm.io/installation) | 9+ | gerenciador de pacotes |
-| [CMake](https://cmake.org) + compilador C++ | — | compilar o whisper.cpp |
-| [Git](https://git-scm.com) | — | clonar o whisper.cpp |
+| [CMake](https://cmake.org) + compilador C++ | qualquer | compilar o whisper.cpp |
+| [Git](https://git-scm.com) | qualquer | clonar o whisper.cpp |
 
-> Você **não** precisa instalar Python — o Skkribe baixa um Python 3.11 portátil
+> Você **não** precisa instalar Python, o Skkribe baixa um Python 3.11 portátil
 > próprio (`setup:python`), igual em todas as plataformas. Os detalhes de
 > instalação dos pré-requisitos (por SO) estão nos guias de build abaixo.
 
@@ -126,7 +126,7 @@ pnpm run dev
 ```
 
 Na primeira execução o app pede seu token HuggingFace e baixa os modelos
-automaticamente — igual ao app instalado.
+automaticamente, igual ao app instalado.
 
 ---
 
@@ -150,7 +150,7 @@ Visão geral e a opção de build automático via GitHub Actions:
 
 | Doc | Pra quem |
 |---|---|
-| [GETTING_STARTED.md](docs/GETTING_STARTED.md) | Usuário final — primeira execução, token HF |
+| [GETTING_STARTED.md](docs/GETTING_STARTED.md) | Usuário final: primeira execução, token HF |
 | [BUILD.md](docs/BUILD.md) | Visão geral de como gerar os instaladores |
 | [build-macos.md](docs/build-macos.md) · [build-windows.md](docs/build-windows.md) · [build-linux.md](docs/build-linux.md) | Guia passo a passo por plataforma |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Quem quer entender o código por dentro |
@@ -169,7 +169,7 @@ disso ele funciona 100% offline.
 
 ## 📄 Licença
 
-[MIT](LICENSE) — use, estude, modifique e distribua à vontade.
+[MIT](LICENSE): use, estude, modifique e distribua à vontade.
 
 Construído sobre projetos open source incríveis:
 [whisper.cpp](https://github.com/ggml-org/whisper.cpp),

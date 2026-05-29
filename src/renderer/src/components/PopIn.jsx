@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 
 /**
- * Apple-style "pop in" entry animation — fade + scale from 86% with a
+ * Apple-style "pop in" entry animation, fade + scale from 86% with a
  * subtle rubber-band overshoot. Mirrors `Theme/Animations.swift` so the
  * Electron and Swift apps feel identical when navigating between views.
  *

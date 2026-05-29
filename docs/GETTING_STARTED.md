@@ -16,12 +16,12 @@ Baixe o arquivo da sua plataforma em
 | **Windows** | `Skkribe Setup 1.0.0.exe` | Execute, siga o instalador |
 | **Linux** | `Skkribe-1.0.0.AppImage` | Dê permissão de execução e abra (veja abaixo) |
 
-### macOS — "app não verificado"
+### macOS: "app não verificado"
 
 Como o app não é assinado pela Apple, na primeira abertura o macOS bloqueia.
 **Clique com o botão direito → Abrir → Abrir** (só na primeira vez).
 
-### Linux — rodar o AppImage
+### Linux: rodar o AppImage
 
 ```bash
 chmod +x Skkribe-1.0.0.AppImage
@@ -66,7 +66,7 @@ Depois do token, o app baixa e configura tudo sozinho:
 - Ambiente Python com pyannote.audio (~1,5 GB)
 - Pesos de identificação de vozes (~100 MB)
 
-Leva de **5 a 15 minutos** dependendo da sua internet. **Só na primeira vez** —
+Leva de **5 a 15 minutos** dependendo da sua internet. **Só na primeira vez**,
 depois abre instantâneo.
 
 ---
@@ -79,10 +79,10 @@ depois abre instantâneo.
    - **1 pessoa** → monólogo (mais rápido, sem separar vozes)
    - **2 ou 3 pessoas** → força exatamente esse número (resultado melhor)
 3. Aguarde. O tempo depende do tamanho do áudio e do seu computador:
-   - **Mac (Apple Silicon)**: rápido — usa a GPU
-   - **Windows / Linux (CPU)**: mais lento — ~1x a 2x a duração do áudio
+   - **Mac (Apple Silicon)**: rápido, usa a GPU
+   - **Windows / Linux (CPU)**: mais lento, ~1x a 2x a duração do áudio
 
-> O app traz o próprio Python embutido — você **não** precisa ter Python
+> O app traz o próprio Python embutido, você **não** precisa ter Python
 > instalado em nenhuma plataforma.
 4. Pronto! Renomeie as pessoas, copie as falas, exporte em Markdown.
 
@@ -97,5 +97,5 @@ depois abre instantâneo.
 
 ## Deu algum erro?
 
-Veja [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — cobre os problemas mais comuns
+Veja [TROUBLESHOOTING.md](TROUBLESHOOTING.md), cobre os problemas mais comuns
 (token inválido, Python faltando no Linux, download interrompido, etc).

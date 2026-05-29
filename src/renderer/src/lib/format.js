@@ -1,4 +1,4 @@
-// Time formatting helpers — mirror AppState.formatElapsed and formatClock from the Mac app.
+// Time formatting helpers, mirror AppState.formatElapsed and formatClock from the Mac app.
 
 export function formatElapsed(seconds) {
   const s = Math.floor(seconds)
