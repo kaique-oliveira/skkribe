@@ -29,15 +29,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macOS is built locally on the maintainer's M-series Mac via
-          # `pnpm run build:mac`, no CI cost. Uncomment the macOS entry to
-          # build it in CI too (note: macOS minutes cost 10x on GitHub).
+          # Note: macOS minutes cost 10x on GitHub Actions. macOS can also be
+          # built locally on an M-series Mac via `pnpm run build:mac`.
+          - os: macos-14        # arm64 dmg/zip
+            artifact: skkribe-mac
           - os: windows-latest  # win-x64 NSIS installer
             artifact: skkribe-win
           - os: ubuntu-22.04    # AppImage
             artifact: skkribe-linux
-          # - os: macos-14        # arm64 dmg/zip
-          #   artifact: skkribe-mac
 
     runs-on: ${{ matrix.os }}
 
