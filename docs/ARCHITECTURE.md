@@ -23,6 +23,7 @@ skkribe/
 │       └── views/            #   uma tela por estado (ver abaixo)
 ├── scripts/                  # scripts de setup (dev / CI)
 │   ├── setup-whisper.js      #   compila o whisper.cpp + baixa VAD
+│   ├── setup-python.js       #   baixa o CPython 3.11 portátil
 │   ├── setup-diarization.js  #   (legado) monta o venv manualmente
 │   └── download-model.js     #   (legado) baixa um modelo whisper
 ├── resources/
@@ -117,7 +118,7 @@ embutido, o resto baixa no primeiro launch.
 
 | Tipo | Onde (produção) | O quê |
 |---|---|---|
-| **Bundled** (read-only) | dentro do `.app`/`.exe`/`.AppImage` | binário whisper, VAD, `diarize.py`, Python portátil (Win) |
+| **Bundled** (read-only) | dentro do `.app`/`.exe`/`.AppImage` | binário whisper, VAD, `diarize.py`, CPython 3.11 portátil (todas as plataformas) |
 | **Gravável** | `app.getPath('userData')` | modelo large-v3, venv Python, cache pyannote, token HF |
 
 > Em **dev**, os dois caminhos colapsam pra `resources/` no repositório, então
@@ -128,7 +129,8 @@ embutido, o resto baixa no primeiro launch.
 `runSetup` só roda o que falta — se o app crashar no meio, retoma de onde parou:
 
 1. **model** — baixa `ggml-large-v3-q5_0.bin` (~1 GB) da HuggingFace
-2. **venv** — cria o venv Python, instala `torch<2.6` + `pyannote.audio>=3.3`
+2. **venv** — cria o venv a partir do **Python 3.11 portátil bundlado** (não do
+   Python do sistema), instala `torch<2.6` + `pyannote.audio>=3.3`
 3. **weights** — baixa os pesos do pyannote (~100 MB) usando o token do usuário
 
 Um marcador de versão (`VENV_SCHEMA`) detecta venvs antigos/incompatíveis e os
@@ -164,5 +166,6 @@ Cada estado renderiza uma view (`App.jsx` faz o switch). O design system
 | whisper.cpp em vez de Python | binário nativo, sem dependência de Python pesado pra transcrever; Metal no Mac |
 | pyannote em Python (não nativo) | é o estado-da-arte em diarização; não há equivalente C++ maduro |
 | Modelo fixo `large-v3` | melhor qualidade em nomes próprios/palavras raras; sem tela de config = menos confusão |
-| Modelos baixados em runtime | instalador de ~150 MB em vez de ~3 GB; cabe nos canais de distribuição |
+| Modelos baixados em runtime | instalador de ~180 MB em vez de ~3 GB; cabe nos canais de distribuição |
+| Python 3.11 portátil bundlado | venv determinístico nas 3 plataformas; imune ao Python do sistema ser 3.13/3.14 ou inexistente |
 | `torch<2.6` / `huggingface_hub<0.24` | pins necessários por breaking changes upstream — ver comentários no código |

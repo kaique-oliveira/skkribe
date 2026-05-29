@@ -34,9 +34,10 @@
     "build:win": "npm run build:renderer && electron-builder --win",
     "build:linux": "npm run build:renderer && electron-builder --linux",
     "setup:whisper": "node scripts/setup-whisper.js",
+    "setup:python": "node scripts/setup-python.js",
     "setup:diarization": "node scripts/setup-diarization.js",
     "setup:model": "node scripts/download-model.js",
-    "setup:all": "npm run setup:whisper && echo '\\n→ Now run: npm run setup:diarization -- --token=hf_…\\n  and:    npm run setup:model'"
+    "setup:all": "npm run setup:whisper && npm run setup:python"
   },
   "dependencies": {
     "ffmpeg-static": "^5.2.0"
@@ -79,6 +80,7 @@
           "!python/venv/**",
           "!python/hf_cache/**",
           "!python/.diarization-config.json",
+          "!python/.hf-token",
           "!whisper/models/**"
         ]
       }

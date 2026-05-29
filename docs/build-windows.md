@@ -20,10 +20,10 @@ winget install Git.Git
 
 # Ferramentas de compilação C++ (MSVC + CMake) — necessário pro whisper.cpp
 winget install Microsoft.VisualStudio.2022.BuildTools
-
-# Python 3.11 (pra rodar em modo dev; o app empacotado traz o seu próprio)
-winget install Python.Python.3.11
 ```
+
+> Você **não** precisa instalar Python — o Skkribe baixa e empacota um Python
+> 3.11 portátil próprio (passo 4 abaixo).
 
 > Ao instalar o **Visual Studio Build Tools**, na tela de componentes marque
 > **"Desenvolvimento para desktop com C++"** (Desktop development with C++).
@@ -40,10 +40,10 @@ npm install -g pnpm
 ### Para quem já tem ambiente
 
 Você precisa de: MSVC + CMake (via VS Build Tools 2022), `node` (20+),
-`pnpm` (9+), `git`, e Python 3 no PATH (só pra modo dev). Confira:
+`pnpm` (9+) e `git`. Confira:
 
 ```powershell
-cmake --version; node --version; pnpm --version; git --version; python --version
+cmake --version; node --version; pnpm --version; git --version
 ```
 
 ---
@@ -78,17 +78,13 @@ O binário vai pra `resources\whisper\main.exe`.
 ## 4. Baixar o Python portátil (vai dentro do instalador)
 
 O app empacotado não depende do Python do usuário — ele traz um Python próprio.
-Baixe-o pra dentro de `resources`:
 
 ```powershell
-mkdir resources\python\runtime -Force
-curl -L -o python.tar.gz https://github.com/indygreg/python-build-standalone/releases/download/20240814/cpython-3.11.10+20240814-x86_64-pc-windows-msvc-shared-install_only.tar.gz
-tar -xzf python.tar.gz -C resources\python\runtime --strip-components=1
-del python.tar.gz
+pnpm run setup:python
 ```
 
-> Isso é o mesmo que o GitHub Actions faz automaticamente. Confira que o arquivo
-> `resources\python\runtime\python.exe` existe.
+> Isso baixa o CPython 3.11 portátil pra `resources\python\runtime\`. Confira
+> que o arquivo `resources\python\runtime\python.exe` existe.
 
 ---
 

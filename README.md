@@ -100,11 +100,11 @@ de design? Está tudo em [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md).
 | [Node.js](https://nodejs.org) | 20+ | rodar o Electron + Vite |
 | [pnpm](https://pnpm.io/installation) | 9+ | gerenciador de pacotes |
 | [CMake](https://cmake.org) + compilador C++ | — | compilar o whisper.cpp |
-| [Python](https://python.org) | 3.10–3.12 | rodar o pyannote.audio |
 | [Git](https://git-scm.com) | — | clonar o whisper.cpp |
 
-> Os detalhes de instalação de cada um (por sistema operacional) estão nos guias
-> de build linkados abaixo.
+> Você **não** precisa instalar Python — o Skkribe baixa um Python 3.11 portátil
+> próprio (`setup:python`), igual em todas as plataformas. Os detalhes de
+> instalação dos pré-requisitos (por SO) estão nos guias de build abaixo.
 
 ### Passos
 
@@ -117,8 +117,9 @@ cd skkribe
 pnpm install
 pnpm install --dir src/renderer
 
-# 3. compilar o binário do whisper.cpp (uma vez, ~3-5 min)
-pnpm run setup:whisper
+# 3. preparar os motores nativos (uma vez, ~5 min)
+pnpm run setup:whisper     # compila o whisper.cpp + baixa o VAD
+pnpm run setup:python      # baixa o Python 3.11 portátil
 
 # 4. rodar em modo desenvolvimento (hot reload)
 pnpm run dev

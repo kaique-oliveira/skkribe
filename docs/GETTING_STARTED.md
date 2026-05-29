@@ -81,6 +81,9 @@ depois abre instantâneo.
 3. Aguarde. O tempo depende do tamanho do áudio e do seu computador:
    - **Mac (Apple Silicon)**: rápido — usa a GPU
    - **Windows / Linux (CPU)**: mais lento — ~1x a 2x a duração do áudio
+
+> O app traz o próprio Python embutido — você **não** precisa ter Python
+> instalado em nenhuma plataforma.
 4. Pronto! Renomeie as pessoas, copie as falas, exporte em Markdown.
 
 ---

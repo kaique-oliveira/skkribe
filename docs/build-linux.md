@@ -17,12 +17,13 @@ executável que roda em praticamente qualquer distro, sem instalação.
 sudo apt update
 sudo apt install -y build-essential cmake git
 
-# Python + módulo venv (o app usa pra rodar o pyannote)
-sudo apt install -y python3 python3-venv
-
 # FUSE — necessário pra RODAR AppImages (e pro próprio app gerado abrir)
 sudo apt install -y libfuse2
 ```
+
+> Você **não** precisa instalar Python — o Skkribe baixa e empacota um Python
+> 3.11 portátil próprio (passo 3 abaixo). Isso vale também pro usuário final:
+> o AppImage roda sem Python no sistema.
 
 Node 20 + pnpm (via [nvm](https://github.com/nvm-sh/nvm), recomendado):
 
@@ -35,16 +36,12 @@ npm install -g pnpm
 
 ### Para quem já tem ambiente
 
-Precisa de: `gcc/g++`, `cmake`, `git`, `node` (20+), `pnpm` (9+),
-`python3` **com `python3-venv`**, e `libfuse2`. Confira:
+Precisa de: `gcc/g++`, `cmake`, `git`, `node` (20+), `pnpm` (9+) e `libfuse2`.
+Confira:
 
 ```bash
-cmake --version && node --version && pnpm --version && python3 -m venv --help >/dev/null && echo "venv ok"
+cmake --version && node --version && pnpm --version && echo ok
 ```
-
-> ⚠️ O erro mais comum no Linux é ter `python3` mas **não** ter o pacote
-> `python3-venv`. O app detecta isso e avisa, mas pra build local instale
-> antes: `sudo apt install python3-venv`.
 
 ---
 
@@ -60,14 +57,15 @@ pnpm install --dir src/renderer
 
 ---
 
-## 3. Compilar o whisper.cpp
+## 3. Preparar os motores nativos
 
 ```bash
-pnpm run setup:whisper
+pnpm run setup:whisper     # compila o whisper.cpp (GCC) + baixa o VAD
+pnpm run setup:python      # baixa o Python 3.11 portátil (~30 MB)
 ```
 
-Compila com GCC (modo CPU) e baixa o modelo VAD. ~3-5 min.
-O binário vai pra `resources/whisper/main`.
+O whisper vai pra `resources/whisper/main` e o Python pra
+`resources/python/runtime/`. ~3-5 min no total.
 
 ---
 
@@ -92,10 +90,8 @@ chmod +x dist/Skkribe-1.0.0.AppImage
 
 ## Notas
 
-- **Python NÃO vai dentro do AppImage** (diferente do Windows). No Linux o app
-  usa o `python3` do sistema do usuário — por isso o usuário final também
-  precisa de `python3` + `python3-venv` instalados. Isso está documentado no
-  [GETTING_STARTED.md](GETTING_STARTED.md).
+- **Python vai embutido no AppImage** (CPython 3.11 portátil), igual nas outras
+  plataformas — o usuário final **não** precisa de Python instalado.
 - **ffmpeg** vem embutido (`ffmpeg-static`).
 - **Wayland:** se a janela não abrir corretamente em algumas distros com
   Wayland, rode com `--ozone-platform=x11` ou exporte
@@ -108,8 +104,7 @@ chmod +x dist/Skkribe-1.0.0.AppImage
 | Erro | Solução |
 |---|---|
 | `cmake não encontrado` | `sudo apt install cmake build-essential` |
-| `ensurepip is not available` | falta o venv: `sudo apt install python3-venv` |
 | AppImage não abre / erro de FUSE | `sudo apt install libfuse2` |
-| `python3 não encontrado` (no app) | `sudo apt install python3 python3-venv` |
+| `setup:python` falhou | confira a conexão; o script baixa ~30 MB do GitHub |
 
 Mais em [TROUBLESHOOTING.md](TROUBLESHOOTING.md).

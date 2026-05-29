@@ -82,18 +82,11 @@ jobs:
       - name: Build whisper.cpp (per platform)
         run: pnpm run setup:whisper
 
-      # ── Windows-only: bundle a portable Python 3.11 with venv module ─────
-      # python-build-standalone provides a fully-functional Python (unlike the
-      # "embeddable" zip from python.org, which is stripped of venv + pip).
-      - name: Download portable Python (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          mkdir -p resources/python/runtime
-          curl -L -o python.tar.gz https://github.com/indygreg/python-build-standalone/releases/download/20240814/cpython-3.11.10+20240814-x86_64-pc-windows-msvc-shared-install_only.tar.gz
-          tar xzf python.tar.gz -C resources/python/runtime --strip-components=1
-          rm python.tar.gz
-          ls resources/python/runtime/python.exe
+      # ── Bundle a portable CPython 3.11 (python-build-standalone) on ALL
+      #    platforms, so the diarization venv is built from a known-good
+      #    interpreter regardless of the runner's system Python.
+      - name: Download portable Python
+        run: pnpm run setup:python
 
       # ── electron-builder packages everything in resources/ via extraResources
       - name: Package — macOS

@@ -23,7 +23,7 @@ Por isso a regra de ouro:
 > Você não consegue gerar um `.exe` do Windows estando no Mac (o whisper.cpp
 > seria compilado pra Mac).
 
-### O que VAI dentro do instalador (~150–200 MB)
+### O que VAI dentro do instalador (~180–230 MB)
 
 | Item | De onde vem |
 |---|---|
@@ -31,7 +31,12 @@ Por isso a regra de ouro:
 | Binário `whisper.cpp` | compilado por `pnpm run setup:whisper` |
 | Modelo VAD (detector de voz, ~864 KB) | baixado por `setup:whisper` |
 | Script `diarize.py` | já está no repositório |
-| Runtime Python portátil (**só Windows**, ~25 MB) | baixado no CI |
+| Runtime Python 3.11 portátil (~30 MB) | baixado por `pnpm run setup:python` (todas as plataformas) |
+
+> **Por que bundlar o Python?** O pyannote.audio + torch são sensíveis à versão
+> do Python (precisamos de `torch<2.6`, que só tem wheels até o 3.12). Em vez de
+> depender do Python do sistema do usuário — que pode ser 3.13/3.14 ou nem
+> existir — embarcamos um CPython 3.11 portátil idêntico nos três sistemas.
 
 ### O que o app baixa SOZINHO na primeira execução (~2,7 GB)
 
@@ -88,7 +93,8 @@ Os instaladores ficam disponíveis como **artifacts** da execução (14 dias).
 # pré-requisito comum (uma vez)
 pnpm install
 pnpm install --dir src/renderer
-pnpm run setup:whisper        # compila o whisper.cpp
+pnpm run setup:whisper        # compila o whisper.cpp + baixa o VAD
+pnpm run setup:python         # baixa o Python 3.11 portátil
 
 # empacotar (rode no SO correspondente)
 pnpm run build:mac            # → dist/*.dmg, dist/*.zip

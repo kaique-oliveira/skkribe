@@ -30,7 +30,8 @@ xcode-select --install
 brew install cmake node pnpm
 ```
 
-O Python 3 já vem no macOS — não precisa instalar.
+> Você **não** precisa instalar Python — o Skkribe baixa e empacota um Python
+> 3.11 portátil próprio (passo 3 abaixo).
 
 ### Para quem já tem ambiente
 
@@ -38,7 +39,7 @@ Você precisa de: `cmake`, `node` (20+), `pnpm` (9+), `git`, e Xcode Command Lin
 Tools. Confira:
 
 ```bash
-cmake --version && node --version && pnpm --version && python3 --version
+cmake --version && node --version && pnpm --version && git --version
 ```
 
 ---
@@ -55,14 +56,15 @@ pnpm install --dir src/renderer
 
 ---
 
-## 3. Compilar o whisper.cpp
+## 3. Preparar os motores nativos
 
 ```bash
-pnpm run setup:whisper
+pnpm run setup:whisper     # compila o whisper.cpp (Metal) + baixa o VAD
+pnpm run setup:python      # baixa o Python 3.11 portátil (~30 MB)
 ```
 
-Isso clona o whisper.cpp, compila com Metal e baixa o modelo VAD. Leva ~3-5 min.
-O resultado vai pra `resources/whisper/main`.
+O whisper vai pra `resources/whisper/main` e o Python pra
+`resources/python/runtime/`. Leva ~3-5 min no total.
 
 ---
 

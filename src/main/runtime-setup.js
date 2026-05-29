@@ -62,7 +62,12 @@ function paths(app) {
     whisperBin:     path.join(bundled, 'whisper', WHISPER_BIN_NAME),
     vadModel:       path.join(bundled, 'whisper', 'ggml-silero-v5.1.2.bin'),
     diarizeScript:  path.join(bundled, 'python', 'diarize.py'),
-    winPythonBin:   path.join(bundled, 'python', 'runtime', 'python.exe'),
+    // The bundled, relocatable CPython 3.11 (python-build-standalone) we ship
+    // on ALL platforms so the venv is built from a known-good interpreter
+    // regardless of what the user's system Python is (or whether they have one).
+    bundledPython:  process.platform === 'win32'
+      ? path.join(bundled, 'python', 'runtime', 'python.exe')
+      : path.join(bundled, 'python', 'runtime', 'bin', 'python3'),
     // user-writable (userData in prod, repo's resources/ in dev so manual
     // setup scripts and the runtime auto-setup share the same paths)
     modelsDir:      path.join(user, 'whisper', 'models'),
@@ -104,19 +109,19 @@ function saveToken(app, token) {
 }
 
 function findSystemPython(app) {
-  if (process.platform === 'win32') {
-    // Packaged: use the bundled python-build-standalone runtime we ship.
-    const bundled = paths(app).winPythonBin
-    if (fs.existsSync(bundled)) return bundled
-    // Dev (running from source, no bundled runtime): fall back to a system
-    // Python so contributors on Windows can `pnpm run dev` without packaging.
-    for (const bin of ['py', 'python', 'python3']) {
-      const r = spawnSync(bin, ['--version'], { stdio: 'pipe' })
-      if (r.status === 0) return bin
-    }
-    return null
-  }
-  for (const bin of ['python3', 'python3.11', 'python3.12', 'python3.10', 'python']) {
+  // Always prefer the bundled python-build-standalone runtime (shipped on every
+  // platform via `pnpm run setup:python`). It's a known-good CPython 3.11, so
+  // torch<2.6 + pyannote install deterministically — no system-Python roulette.
+  const bundled = paths(app).bundledPython
+  if (fs.existsSync(bundled)) return bundled
+
+  // Fallback (e.g. a dev who hasn't run setup:python yet): pick a system Python
+  // in the 3.10–3.12 range that torch<2.6 has wheels for, preferring explicit
+  // versions over a bare `python3` that might be too new (3.13/3.14).
+  const candidates = process.platform === 'win32'
+    ? ['py', 'python', 'python3']
+    : ['python3.12', 'python3.11', 'python3.10', 'python3', 'python']
+  for (const bin of candidates) {
     const r = spawnSync(bin, ['--version'], { stdio: 'pipe' })
     if (r.status === 0) return bin
   }
@@ -136,9 +141,10 @@ function probeVenvCapable(pythonBin) {
 }
 
 // Schema version of the python venv layout. Bump when changing the pinned
-// pyannote.audio version or the HF API kwargs — a mismatch triggers a venv
-// rebuild instead of leaving the user with an obscure Python TypeError.
-const VENV_SCHEMA = '3'
+// pyannote.audio version, the HF API kwargs, or the base Python interpreter —
+// a mismatch triggers a venv rebuild instead of leaving the user with a venv
+// built from the wrong/old interpreter.
+const VENV_SCHEMA = '4'
 
 // ── Granular readiness check ─────────────────────────────────────────────────
 function checkSetup(app) {
@@ -274,25 +280,28 @@ async function runSetup(app, emit) {
     emit({ phase: 'venv', label: 'Criando ambiente Python isolado…', percent: 0 })
     const sysPy = findSystemPython(app)
     if (!sysPy) {
-      throw new Error(process.platform === 'win32'
-        ? 'Runtime Python não encontrado em resources/python/runtime/ (bug de empacotamento)'
-        : 'Python 3 não encontrado. macOS: `brew install python@3.11`. Linux: `sudo apt install python3 python3-venv`.')
+      throw new Error(app.isPackaged
+        ? 'Python portátil não encontrado no app (bug de empacotamento — resources/python/runtime/ ausente).'
+        : 'Python não encontrado. Rode `pnpm run setup:python` para baixar o Python portátil (recomendado), ou instale Python 3.10–3.12 no sistema.')
     }
     // Catch missing python3-venv on Debian/Ubuntu before we hit a confusing
-    // "ensurepip is not available" error mid-create. This also catches edge
-    // cases where the user's Python install is corrupted/incomplete.
+    // "ensurepip is not available" error mid-create. The bundled python always
+    // has venv; this only matters for the system-Python fallback path.
     const venvProbe = probeVenvCapable(sysPy)
     if (!venvProbe.ok) {
       const hint = process.platform === 'linux'
-        ? '\n\nNo Linux (Ubuntu/Debian): `sudo apt install python3-venv`\nNo Fedora/RHEL: `sudo dnf install python3-virtualenv`'
+        ? '\n\nDica: rode `pnpm run setup:python` (traz um Python completo), ou no Ubuntu/Debian `sudo apt install python3-venv`.'
         : ''
       throw new Error(`Python encontrado (${sysPy}) mas o módulo venv não está disponível.${hint}\n\nDetalhes: ${venvProbe.stderr.slice(-300)}`)
     }
     fs.mkdirSync(path.dirname(p.venvDir), { recursive: true })
-    await runProcess(sysPy, ['-m', 'venv', p.venvDir], (l) => emit({ phase: 'venv', label: l, percent: 0.1 }))
+    // --clear wipes any half-built venv contents so a retry starts clean.
+    await runProcess(sysPy, ['-m', 'venv', '--clear', p.venvDir], (l) => emit({ phase: 'venv', label: l, percent: 0.1 }))
 
+    // Use `python -m pip` rather than the pip launcher binary — the binary can
+    // be missing/broken on a freshly-created venv, but the module is always there.
     emit({ phase: 'venv', label: 'Atualizando pip…', percent: 0.15 })
-    await runProcess(p.venvPip, ['install', '--upgrade', 'pip', '--quiet'])
+    await runProcess(p.venvPython, ['-m', 'pip', 'install', '--upgrade', 'pip', '--quiet'])
 
     emit({ phase: 'venv', label: 'Instalando PyTorch CPU (~1.0 GB, pode demorar)…', percent: 0.25 })
     // Pin torch<2.6: 2.6+ flipped torch.load's default to weights_only=True,
@@ -300,8 +309,8 @@ async function runSetup(app, emit) {
     // which isn't in the safe-globals allowlist. Until pyannote fixes the
     // loading code, an older torch keeps the legacy default and Just Works.
     await runProcess(
-      p.venvPip,
-      ['install', 'torch<2.6', 'torchaudio<2.6', '--index-url', 'https://download.pytorch.org/whl/cpu', '--quiet'],
+      p.venvPython,
+      ['-m', 'pip', 'install', 'torch<2.6', 'torchaudio<2.6', '--index-url', 'https://download.pytorch.org/whl/cpu', '--quiet'],
       (l) => emit({ phase: 'venv', label: l.slice(0, 80), percent: 0.45 })
     )
 
@@ -312,8 +321,8 @@ async function runSetup(app, emit) {
     // (deprecated but functional) alias for token=. Updating once pyannote
     // upstream fixes the forwarding will let us drop both pins.
     await runProcess(
-      p.venvPip,
-      ['install', 'pyannote.audio>=3.3', 'huggingface_hub<0.24', '--quiet'],
+      p.venvPython,
+      ['-m', 'pip', 'install', 'pyannote.audio>=3.3', 'huggingface_hub<0.24', '--quiet'],
       (l) => emit({ phase: 'venv', label: l.slice(0, 80), percent: 0.9 })
     )
 

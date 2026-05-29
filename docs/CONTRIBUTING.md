@@ -20,8 +20,9 @@ git clone https://github.com/kaique-oliveira/skkribe.git
 cd skkribe
 pnpm install
 pnpm install --dir src/renderer
-pnpm run setup:whisper
-pnpm run dev          # hot reload do renderer + Electron
+pnpm run setup:whisper    # compila o whisper.cpp + baixa o VAD
+pnpm run setup:python     # baixa o Python 3.11 portátil
+pnpm run dev              # hot reload do renderer + Electron
 ```
 
 Na primeira `pnpm run dev` o app pede seu token HuggingFace e baixa os modelos
@@ -44,6 +45,7 @@ Resumo de onde mexer:
 | Algoritmo de diarização | `resources/python/diarize.py` |
 | O setup do primeiro uso | `src/main/runtime-setup.js` |
 | Como compila o whisper.cpp | `scripts/setup-whisper.js` |
+| Como baixa o Python portátil | `scripts/setup-python.js` |
 
 ---
 

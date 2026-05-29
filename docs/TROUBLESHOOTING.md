@@ -45,15 +45,11 @@ NVIDIA, dá pra acelerar reinstalando o PyTorch com CUDA dentro do venv
 
 ## Linux
 
-### "ensurepip is not available" ou "python3 não encontrado"
+### "Python portátil não encontrado" / "python3 não encontrado"
 
-Falta o módulo venv do Python:
-
-```bash
-sudo apt install python3 python3-venv
-```
-
-(Fedora: `sudo dnf install python3-virtualenv`)
+O app traz o próprio Python embutido, então isso só acontece se o build não
+incluiu o runtime. **No app instalado:** é bug de empacotamento — reporte uma
+issue. **Rodando do código (dev):** você esqueceu de rodar `pnpm run setup:python`.
 
 ### AppImage não abre / "dlopen(): error loading libfuse.so.2"
 
