@@ -40,6 +40,37 @@ const PIPELINE = Object.freeze({
   chunkSeconds: 60,
 })
 
+// Per-subprocess timeouts. Whisper.cpp on CPU runs about real-time per chunk,
+// so 10 min per 60s chunk is ~10× slowdown headroom — anything beyond that is
+// a genuine hang (corrupted audio, OS locking, etc). Pyannote on CPU is
+// ~1× realtime; for a 4-hour audio cap it at 6 hours.
+const TIMEOUTS = Object.freeze({
+  perChunkMs:  10 * 60 * 1000,        // whisper per chunk
+  diarizeMs:   6 * 60 * 60 * 1000,    // pyannote on the full WAV
+})
+
+/** Whisper benefits from 2–4 threads per process; below 2 it leaves cores
+ *  idle, above 4 hits diminishing returns. Balance worker count × per-worker
+ *  threads to keep both above-floor while saturating the CPU.
+ *
+ *  Examples:
+ *    8 cores  → 2 workers × 4 threads = 8 (saturates)
+ *    12 cores → 3 workers × 4 threads = 12
+ *    16 cores → 4 workers × 4 threads = 16
+ *    4 cores  → 2 workers × 2 threads = 4
+ *    24 cores → 6 workers × 4 threads = 24 (worker cap kicks in)
+ *
+ *  The previous logic emitted 6 workers × 1 thread on an 8-core box, which
+ *  is the worst of both worlds: many parallel ffmpeg pipe-reads serialised
+ *  on a single-threaded whisper each. */
+function balanceParallelism(cores, chunkCount) {
+  const targetThreadsPerWorker = 4
+  const idealWorkers = Math.max(1, Math.floor(cores / targetThreadsPerWorker))
+  const workers = Math.max(1, Math.min(idealWorkers, 6, chunkCount || idealWorkers))
+  const threadsPerWorker = Math.max(2, Math.floor(cores / workers))
+  return { workers, threadsPerWorker }
+}
+
 // ── ffmpeg helpers ────────────────────────────────────────────────────────────
 
 /** Convert any input into 16 kHz mono PCM WAV — the shape whisper + pyannote want. */
@@ -127,8 +158,13 @@ function transcribeChunk(whisperBin, vadModel, modelPath, wavPath, threads, chun
 
     let stderr = ''
     const proc = spawn(whisperBin, args)
+    const killTimer = setTimeout(() => {
+      try { proc.kill('SIGKILL') } catch (_) {}
+      reject(new Error(`whisper travou em ${path.basename(wavPath)} (>10 min) — áudio corrompido?`))
+    }, TIMEOUTS.perChunkMs)
     proc.stderr.on('data', d => { stderr += d.toString() })
     proc.on('close', code => {
+      clearTimeout(killTimer)
       if (code !== 0) {
         return reject(new Error(`whisper failed (${code}): ${stderr.slice(-300)}`))
       }
@@ -150,7 +186,7 @@ function transcribeChunk(whisperBin, vadModel, modelPath, wavPath, threads, chun
         reject(new Error(`bad JSON from whisper: ${err.message}`))
       }
     })
-    proc.on('error', reject)
+    proc.on('error', err => { clearTimeout(killTimer); reject(err) })
   })
 }
 
@@ -185,21 +221,20 @@ function groupTokensIntoWords(tokens, chunkOffsetSecs) {
   return out
 }
 
-/** Run whisper on each chunk in parallel, capped at maxWorkers simultaneous procs. */
-async function transcribeChunksParallel(whisperBin, vadModel, modelPath, chunks, threads, chunkSeconds, maxWorkers, onProgress) {
+/** Run whisper on each chunk in parallel using the worker/thread balance
+ *  computed by `balanceParallelism` upstream. */
+async function transcribeChunksParallel(whisperBin, vadModel, modelPath, chunks, workers, threadsPerWorker, chunkSeconds, onProgress) {
   const results = new Array(chunks.length)
   let running = 0, index = 0
 
   await new Promise((resolve, reject) => {
     function pump() {
-      while (running < maxWorkers && index < chunks.length) {
+      while (running < workers && index < chunks.length) {
         const i = index++
         running++
         const offset = i * chunkSeconds
-        // Divide CPU threads evenly across parallel workers so we don't oversubscribe.
-        const tperWorker = Math.max(1, Math.floor(threads / Math.min(maxWorkers, chunks.length)))
         onProgress(`whisper: bloco ${i + 1}/${chunks.length}`)
-        transcribeChunk(whisperBin, vadModel, modelPath, chunks[i], tperWorker, offset)
+        transcribeChunk(whisperBin, vadModel, modelPath, chunks[i], threadsPerWorker, offset)
           .then(segs => {
             results[i] = segs
             running--
@@ -313,8 +348,8 @@ ipcMain.handle('shell:open-external', async (_e, url) => {
 // Frontend hint `expectedSpeakers` is forwarded to diarize.py as a kwarg:
 //   null     → auto (pyannote picks)
 //   1        → skip diarization, attribute everything to one speaker
-//   2        → num_speakers=2 (hard constraint)
-//   >=3      → min_speakers=N (no upper bound)
+//   >=2      → num_speakers=N (HARD constraint — soft hints like min_speakers
+//              let pyannote drift to N+1 phantoms in side-by-side tests)
 ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
   const send = (msg) => event.sender.send('transcribe:progress', msg)
   const p = runtimeSetup.paths(app)
@@ -332,8 +367,8 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
   const hfToken = runtimeSetup.HF_TOKEN
   const modelPath = p.whisperModel
 
-  const { threads, chunkSeconds: chunkSecs } = PIPELINE
-  const maxWorkers = Math.max(1, Math.min(Math.floor(os.cpus().length / 2), 6))
+  const { chunkSeconds: chunkSecs } = PIPELINE
+  const { workers, threadsPerWorker } = balanceParallelism(os.cpus().length)
 
   const ts = Date.now()
   const tmpDir = path.join(os.tmpdir(), `skkribe_${ts}`)
@@ -360,9 +395,9 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
     const chunks = await splitWavIntoChunks(tmpWav, tmpDir, chunkSecs)
 
     // 3. Parallel whisper (with VAD + non-speech-token suppression)
-    send({ phase: 'transcribing', message: `${chunks.length} blocos · ${maxWorkers} workers em paralelo` })
+    send({ phase: 'transcribing', message: `${chunks.length} blocos · ${workers}×${threadsPerWorker} threads em paralelo` })
     const whisperSegments = await transcribeChunksParallel(
-      whisperBin, vadModel, modelPath, chunks, threads, chunkSecs, maxWorkers,
+      whisperBin, vadModel, modelPath, chunks, workers, threadsPerWorker, chunkSecs,
       (msg) => send({ phase: 'transcribing', message: msg })
     )
 
@@ -414,24 +449,41 @@ ipcMain.handle('transcribe:file', async (event, filePath, expectedSpeakers) => {
       const proc = spawn(pythonBin, args, {
         env: { ...process.env, HF_HOME: p.hfCache },
       })
+      const diarKill = setTimeout(() => {
+        try { proc.kill('SIGKILL') } catch (_) {}
+        reject(new Error('pyannote travou (>6h) — provavelmente áudio muito longo ou corrompido'))
+      }, TIMEOUTS.diarizeMs)
       proc.stdout.on('data', d => { stdout += d.toString() })
       proc.stderr.on('data', d => {
         stderr += d.toString()
         d.toString().split('\n').filter(l => l.trim()).forEach(l => send({ phase: 'diarizing', message: l }))
       })
       proc.on('close', () => {
+        clearTimeout(diarKill)
         try { fs.unlinkSync(tmpWav) } catch (_) {}
         try { fs.unlinkSync(segJson) } catch (_) {}
-        const last = stdout.trim().split('\n').filter(l => l.trim()).pop() || ''
-        try {
-          const parsed = JSON.parse(last)
-          if (parsed.error) reject(new Error(parsed.error))
-          else resolve({ fileName: path.basename(filePath), segments: parsed.segments })
-        } catch (_) {
-          reject(new Error(`pyannote retornou saída inesperada.\nstderr: ${stderr.slice(-400)}`))
+        // diarize.py prints the result as a single JSON object on stdout, but
+        // some pyannote/torch combos leak deprecation warnings or torchaudio
+        // backend notices to stdout before that. Walk lines from the END
+        // looking for the first one that parses as JSON and has either a
+        // "segments" array or an "error" field — that's our payload.
+        const lines = stdout.split('\n').map(l => l.trim()).filter(Boolean)
+        let parsed = null
+        for (let i = lines.length - 1; i >= 0; i--) {
+          const l = lines[i]
+          if (l[0] !== '{') continue
+          try {
+            const j = JSON.parse(l)
+            if (j && (j.segments || j.error)) { parsed = j; break }
+          } catch (_) { /* try previous line */ }
         }
+        if (!parsed) {
+          return reject(new Error(`pyannote retornou saída inesperada.\nstderr: ${stderr.slice(-400)}`))
+        }
+        if (parsed.error) return reject(new Error(parsed.error))
+        resolve({ fileName: path.basename(filePath), segments: parsed.segments })
       })
-      proc.on('error', reject)
+      proc.on('error', err => { clearTimeout(diarKill); reject(err) })
     })
 
     return result

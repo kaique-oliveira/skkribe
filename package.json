@@ -54,7 +54,6 @@
           "**/*",
           "!**/.DS_Store",
           "!**/__pycache__/**",
-          "!python/_download.py",
           "!python/venv/**",
           "!python/hf_cache/**",
           "!python/.diarization-config.json",

@@ -90,6 +90,18 @@ function findSystemPython(app) {
   return null
 }
 
+/** Probe whether `python3 -m venv` actually works. On Debian/Ubuntu the venv
+ *  module is shipped in a separate `python3-venv` package and isn't installed
+ *  by default — calling `python3 -m venv …` then dies with the unhelpful
+ *  "ensurepip is not available". Catching that upfront lets us surface a
+ *  copy-pasteable apt command instead of a Python traceback. */
+function probeVenvCapable(pythonBin) {
+  const r = spawnSync(pythonBin, ['-m', 'venv', '--help'], { stdio: 'pipe' })
+  if (r.status === 0) return { ok: true }
+  const stderr = (r.stderr?.toString() || '') + (r.stdout?.toString() || '')
+  return { ok: false, stderr }
+}
+
 // Schema version of the python venv layout. Bump when changing the pinned
 // pyannote.audio version or the HF API kwargs — a mismatch triggers a venv
 // rebuild instead of leaving the user with an obscure Python TypeError.
@@ -228,6 +240,16 @@ async function runSetup(app, emit) {
       throw new Error(process.platform === 'win32'
         ? 'Runtime Python não encontrado em resources/python/runtime/ (bug de empacotamento)'
         : 'Python 3 não encontrado. macOS: `brew install python@3.11`. Linux: `sudo apt install python3 python3-venv`.')
+    }
+    // Catch missing python3-venv on Debian/Ubuntu before we hit a confusing
+    // "ensurepip is not available" error mid-create. This also catches edge
+    // cases where the user's Python install is corrupted/incomplete.
+    const venvProbe = probeVenvCapable(sysPy)
+    if (!venvProbe.ok) {
+      const hint = process.platform === 'linux'
+        ? '\n\nNo Linux (Ubuntu/Debian): `sudo apt install python3-venv`\nNo Fedora/RHEL: `sudo dnf install python3-virtualenv`'
+        : ''
+      throw new Error(`Python encontrado (${sysPy}) mas o módulo venv não está disponível.${hint}\n\nDetalhes: ${venvProbe.stderr.slice(-300)}`)
     }
     fs.mkdirSync(path.dirname(p.venvDir), { recursive: true })
     await runProcess(sysPy, ['-m', 'venv', p.venvDir], (l) => emit({ phase: 'venv', label: l, percent: 0.1 }))
