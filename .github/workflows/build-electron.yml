@@ -31,15 +31,14 @@ jobs:
       matrix:
         include:
           # macOS is built locally on the maintainer's M-series Mac via
-          # `pnpm run build:mac` — no CI cost. Linux is disabled for now;
-          # re-enable by uncommenting the entry below once the Windows
-          # build is validated.
+          # `pnpm run build:mac` — no CI cost. Uncomment the macOS entry to
+          # build it in CI too (note: macOS minutes cost 10x on GitHub).
           - os: windows-latest  # win-x64 NSIS installer
             artifact: skkribe-win
+          - os: ubuntu-22.04    # AppImage
+            artifact: skkribe-linux
           # - os: macos-14        # arm64 dmg/zip
           #   artifact: skkribe-mac
-          # - os: ubuntu-22.04    # AppImage
-          #   artifact: skkribe-linux
 
     runs-on: ${{ matrix.os }}
 
