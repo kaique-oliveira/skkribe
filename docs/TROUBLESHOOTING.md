@@ -15,13 +15,16 @@ Gere o certo em [huggingface.co/settings/tokens](https://huggingface.co/settings
 
 ### "Could not download pyannote..." / erro 401 ou 403 nos pesos
 
-Seu token é válido mas você **não aceitou as licenças** dos modelos. Acesse e
+Seu token é válido mas você **não aceitou as condições** do modelo. Acesse e
 clique em "Agree and access repository" em:
 
-- https://huggingface.co/pyannote/segmentation-3.0
-- https://huggingface.co/pyannote/speaker-diarization-3.1
+- https://huggingface.co/pyannote/speaker-diarization-community-1
 
 Depois reabra o app.
+
+> Atualizou de uma versão antiga do Skkribe? O modelo de vozes mudou
+> (`speaker-diarization-3.1` → `community-1`, mais preciso), e o novo repositório
+> pede um novo "Agree" — mesmo que seu token já funcionasse antes.
 
 ### Download dos modelos interrompido / "Download incompleto"
 

@@ -60,6 +60,11 @@ function paths(app) {
   return {
     // bundled (read-only, lives inside the .app/.exe/.AppImage)
     whisperBin:     path.join(bundled, 'whisper', WHISPER_BIN_NAME),
+    // Optional GPU (Vulkan) build shipped on Windows/Linux. May be absent
+    // (older installers, local dev without the Vulkan SDK); the transcribe
+    // handler probes it at runtime and falls back to the CPU binary.
+    whisperBinVulkan: path.join(bundled, 'whisper',
+                              process.platform === 'win32' ? 'main-vulkan.exe' : 'main-vulkan'),
     vadModel:       path.join(bundled, 'whisper', 'ggml-silero-v5.1.2.bin'),
     diarizeScript:  path.join(bundled, 'python', 'diarize.py'),
     // The bundled, relocatable CPython 3.11 (python-build-standalone) we ship
@@ -108,6 +113,15 @@ function saveToken(app, token) {
   return true
 }
 
+/** Forget the saved token so the first-run flow asks for a new one. Needed
+ *  because a token can be *present but useless* (revoked, or fine-grained
+ *  without "read access to public gated repos"), and every retry would
+ *  otherwise reuse it forever. */
+function clearToken(app) {
+  try { fs.unlinkSync(paths(app).tokenFile) } catch (_) {}
+  return true
+}
+
 function findSystemPython(app) {
   // Always prefer the bundled python-build-standalone runtime (shipped on every
   // platform via `pnpm run setup:python`). It's a known-good CPython 3.11, so
@@ -144,7 +158,15 @@ function probeVenvCapable(pythonBin) {
 // pyannote.audio version, the HF API kwargs, or the base Python interpreter,
 // a mismatch triggers a venv rebuild instead of leaving the user with a venv
 // built from the wrong/old interpreter.
-const VENV_SCHEMA = '4'
+// v5: pyannote.audio 4.x + speaker-diarization-community-1 (dropped the
+//     torch<2.6 and huggingface_hub<0.24 pins those were only needed for
+//     pyannote 3.x checkpoint loading).
+const VENV_SCHEMA = '5'
+
+// The gated HF repo the user must accept conditions for (once, on the HF
+// website) before their token can download the diarization weights.
+const DIARIZATION_MODEL = 'pyannote/speaker-diarization-community-1'
+const DIARIZATION_MODEL_URL = `https://huggingface.co/${DIARIZATION_MODEL}`
 
 // ── Granular readiness check ─────────────────────────────────────────────────
 function checkSetup(app) {
@@ -304,25 +326,20 @@ async function runSetup(app, emit) {
     await runProcess(p.venvPython, ['-m', 'pip', 'install', '--upgrade', 'pip', '--quiet'])
 
     emit({ phase: 'venv', label: 'Instalando PyTorch CPU (~1.0 GB, pode demorar)…', percent: 0.25 })
-    // Pin torch<2.6: 2.6+ flipped torch.load's default to weights_only=True,
-    // and pyannote.audio's checkpoints include torch.torch_version.TorchVersion
-    // which isn't in the safe-globals allowlist. Until pyannote fixes the
-    // loading code, an older torch keeps the legacy default and Just Works.
+    // The CPU wheel index keeps the download lean on Windows/Linux (no CUDA
+    // blobs); on macOS it serves the standard arm64 wheels, which include MPS.
     await runProcess(
       p.venvPython,
-      ['-m', 'pip', 'install', 'torch<2.6', 'torchaudio<2.6', '--index-url', 'https://download.pytorch.org/whl/cpu', '--quiet'],
+      ['-m', 'pip', 'install', 'torch', 'torchaudio', '--index-url', 'https://download.pytorch.org/whl/cpu', '--quiet'],
       (l) => emit({ phase: 'venv', label: l.slice(0, 80), percent: 0.45 })
     )
 
     emit({ phase: 'venv', label: 'Instalando pyannote.audio (~500 MB)…', percent: 0.7 })
-    // pyannote.audio 3.3.x still passes `use_auth_token=` through to
-    // hf_hub_download(), huggingface_hub 0.24+ removed that kwarg entirely,
-    // so we pin huggingface_hub to the last branch that accepts it as a
-    // (deprecated but functional) alias for token=. Updating once pyannote
-    // upstream fixes the forwarding will let us drop both pins.
+    // pyannote.audio 4.x is required by speaker-diarization-community-1 and
+    // uses the modern huggingface_hub `token=` API, so no hub/torch pins.
     await runProcess(
       p.venvPython,
-      ['-m', 'pip', 'install', 'pyannote.audio>=3.3', 'huggingface_hub<0.24', '--quiet'],
+      ['-m', 'pip', 'install', 'pyannote.audio>=4,<5', '--quiet'],
       (l) => emit({ phase: 'venv', label: l.slice(0, 80), percent: 0.9 })
     )
 
@@ -341,7 +358,7 @@ async function runSetup(app, emit) {
       'import os, sys',
       `os.environ["HF_HOME"] = ${JSON.stringify(p.hfCache)}`,
       'from pyannote.audio import Pipeline',
-      'Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=sys.argv[1])',
+      `Pipeline.from_pretrained(${JSON.stringify(DIARIZATION_MODEL)}, token=sys.argv[1])`,
       'print("OK")',
     ].join('\n'))
 
@@ -353,6 +370,29 @@ async function runSetup(app, emit) {
         { HF_HOME: p.hfCache }
       )
       fs.writeFileSync(p.setupMarker, '1')
+    } catch (err) {
+      // The most common failure is an authorization problem, and it has TWO
+      // distinct causes that need different fixes:
+      //   a) the account never accepted the gated repo's conditions, or
+      //   b) the token itself can't read gated repos — it was revoked, belongs
+      //      to another account, or is a fine-grained token created without
+      //      the "Read access to contents of all public gated repos" scope
+      //      (that one is easy to miss and yields a plain 401).
+      // We can't tell them apart from the traceback, so name both and let the
+      // UI offer a "change token" path (a token that's present but useless
+      // would otherwise make every retry fail identically, forever).
+      const msg = String(err.message || err)
+      if (/\b40[13]\b|gated|restricted|unauthorized|authenticat/i.test(msg)) {
+        const e = new Error(
+          'Sem acesso ao modelo de vozes. Duas coisas para conferir:\n' +
+          `1) Abra ${DIARIZATION_MODEL_URL} e clique em "Agree and access repository".\n` +
+          '2) Confirme que o token é da MESMA conta e, se for "fine-grained", que ele tem a permissão ' +
+          '"Read access to contents of all public gated repos".'
+        )
+        e.code = 'hf_access_denied'
+        throw e
+      }
+      throw err
     } finally {
       try { fs.unlinkSync(downloadScript) } catch (_) {}
     }
@@ -361,4 +401,4 @@ async function runSetup(app, emit) {
   emit({ phase: 'done', label: 'Tudo pronto!', percent: 1 })
 }
 
-module.exports = { checkSetup, runSetup, readToken, saveToken, paths, bundledBase, userBase }
+module.exports = { checkSetup, runSetup, readToken, saveToken, clearToken, paths, bundledBase, userBase, downloadFile }

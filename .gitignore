@@ -2,9 +2,6 @@
 .DS_Store
 Thumbs.db
 
-# Per-machine local working dir
-.claude/
-
 # Dependencies
 node_modules/
 src/renderer/node_modules/
@@ -19,6 +16,8 @@ build/icon.iconset/
 # whisper.cpp binaries (built per platform)
 resources/whisper/main
 resources/whisper/main.exe
+resources/whisper/main-vulkan
+resources/whisper/main-vulkan.exe
 resources/whisper/.whisper-version
 resources/whisper/models/*.bin
 resources/whisper/ggml-silero-v5.1.2.bin

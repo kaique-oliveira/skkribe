@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { PopIn } from '../components/PopIn'
 import { StatusPill } from '../components/StatusPill'
 import { PrimaryButton, LinkButton } from '../components/Buttons'
+import { isAuthError } from '../lib/errors'
 
 // First-launch flow:
 //   1. Token gate, the user pastes their own HuggingFace token (the app is
@@ -22,9 +23,10 @@ const PHASE_META = {
 const PHASE_ORDER = ['model', 'venv', 'weights']
 
 const HF_TOKENS_URL = 'https://huggingface.co/settings/tokens'
+// speaker-diarization-community-1 is a gated repo: the user must click
+// "Agree and access repository" once, with the same account as the token.
 const PYANNOTE_LICENSE_URLS = [
-  'https://huggingface.co/pyannote/segmentation-3.0',
-  'https://huggingface.co/pyannote/speaker-diarization-3.1',
+  'https://huggingface.co/pyannote/speaker-diarization-community-1',
 ]
 
 export function FirstRunSetup({ onComplete, onFail }) {
@@ -44,7 +46,16 @@ export function FirstRunSetup({ onComplete, onFail }) {
   if (needsToken) {
     return <TokenGate onSaved={() => setNeedsToken(false)} />
   }
-  return <SetupProgress onComplete={onComplete} onFail={onFail} />
+  return (
+    <SetupProgress
+      onComplete={onComplete}
+      onFail={onFail}
+      onChangeToken={async () => {
+        await window.skkribe.clearToken()
+        setNeedsToken(true)
+      }}
+    />
+  )
 }
 
 // ── Step 1: token entry ───────────────────────────────────────────────────────
@@ -142,7 +153,7 @@ function TokenGate({ onSaved }) {
 }
 
 // ── Step 2: download + install progress ───────────────────────────────────────
-function SetupProgress({ onComplete, onFail }) {
+function SetupProgress({ onComplete, onFail, onChangeToken }) {
   const [phase, setPhase] = useState('model')
   const [label, setLabel] = useState('Iniciando…')
   const [percent, setPercent] = useState(0)
@@ -186,12 +197,22 @@ function SetupProgress({ onComplete, onFail }) {
           </div>
         </PopIn>
         <PopIn delay={0.10}>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-5 py-2 rounded-full bg-accent text-white text-[13px] font-semibold"
-          >
-            Tentar novamente
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-5 py-2 rounded-full bg-accent text-white text-[13px] font-semibold"
+            >
+              Tentar novamente
+            </button>
+            {isAuthError(error) && (
+              <button
+                onClick={onChangeToken}
+                className="px-5 py-2 rounded-full bg-nested hover:bg-hover text-ink-1 text-[13px] font-semibold transition-colors"
+              >
+                Trocar token
+              </button>
+            )}
+          </div>
         </PopIn>
       </div>
     )

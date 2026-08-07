@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
-# Diarize an audio file via pyannote.audio 3.1 and assign each whisper segment
-# (or word, when available) to a speaker. Output: one JSON line on stdout with
-# the final speaker-tagged segments. Progress + diagnostics go to stderr.
+# Diarize an audio file via pyannote.audio (community-1) and assign each whisper
+# segment (or word, when available) to a speaker. Output: one JSON line on
+# stdout with the final speaker-tagged segments. Progress + diagnostics go to
+# stderr.
 #
 # Usage:
 #   diarize.py <audio.wav> <hf_token> <whisper_json>
 #              [--num-speakers=N | --min-speakers=N | --max-speakers=N]
+#              [--wait-json]
 #
 # The whisper JSON is the shape produced by main/index.js, a list of
 # segments with .start / .end / .text plus an optional .words array.
-import sys, json, os, warnings
+#
+# --wait-json lets the Electron main process launch this script BEFORE whisper
+# has finished: diarization (the slow part, needs only the WAV) runs in
+# parallel with transcription, and we only block waiting for the whisper JSON
+# right before the fast final assignment step. The main process writes the
+# JSON atomically (tmp file + rename), so existence == complete.
+import sys, json, os, time, warnings
 warnings.filterwarnings("ignore")
 sys.stdout.reconfigure(line_buffering=True)
 
@@ -170,14 +178,61 @@ def assign_speakers_word_level(whisper_segments, diar):
     return out
 
 
+DIARIZATION_MODEL = "pyannote/speaker-diarization-community-1"
+
+# How long to wait (in --wait-json mode) for whisper to deliver its JSON after
+# diarization finishes. Whisper chunks are individually capped at 10 min by the
+# main process, but total transcription time is unbounded for long audios, so
+# be generous: the main process kills us on ITS failure paths anyway.
+WAIT_JSON_TIMEOUT_S = 4 * 60 * 60
+
+
+def load_pipeline(hf_token):
+    from pyannote.audio import Pipeline
+    try:
+        # pyannote.audio >= 4 (community-1) uses the modern `token=` kwarg.
+        return Pipeline.from_pretrained(DIARIZATION_MODEL, token=hf_token)
+    except TypeError:
+        # Older pyannote.audio still in an un-migrated venv: legacy kwarg.
+        return Pipeline.from_pretrained(DIARIZATION_MODEL, use_auth_token=hf_token)
+
+
+def extract_turns(diarization):
+    """Normalize the pipeline output across pyannote versions into a plain
+    [{start, end, speaker}] list.
+
+    pyannote 4.x returns an object exposing .speaker_diarization plus
+    .exclusive_speaker_diarization: the exclusive variant has no overlapping
+    turns, which is exactly what word-level max-overlap assignment wants
+    (overlap regions otherwise dilute the per-word vote). Prefer it, then the
+    plain annotation, then the 3.x Annotation itself."""
+    for candidate in (
+        getattr(diarization, "exclusive_speaker_diarization", None),
+        getattr(diarization, "speaker_diarization", None),
+        diarization,
+    ):
+        if candidate is None or not hasattr(candidate, "itertracks"):
+            continue
+        diar = [
+            {"start": turn.start, "end": turn.end, "speaker": sp}
+            for turn, _, sp in candidate.itertracks(yield_label=True)
+        ]
+        if diar:
+            return diar
+    return []
+
+
 def main():
     if len(sys.argv) < 4:
-        result({"error": "Uso: diarize.py <audio.wav> <hf_token> <whisper_json> [--num-speakers=N ...]"})
+        result({"error": "Uso: diarize.py <audio.wav> <hf_token> <whisper_json> [--num-speakers=N ...] [--wait-json]"})
         sys.exit(1)
 
     audio_path, hf_token, whisper_json = sys.argv[1], sys.argv[2], sys.argv[3]
-    kwargs = {}
+    kwargs, wait_json = {}, False
     for arg in sys.argv[4:]:
+        if arg == "--wait-json":
+            wait_json = True
+            continue
         if not arg.startswith("--"): continue
         try:
             k, v = arg[2:].split("=", 1)
@@ -186,32 +241,25 @@ def main():
 
     if not os.path.exists(audio_path):
         result({"error": f"audio: {audio_path}"}); sys.exit(1)
-    if not os.path.exists(whisper_json):
+    if not wait_json and not os.path.exists(whisper_json):
         result({"error": f"whisper json: {whisper_json}"}); sys.exit(1)
-
-    with open(whisper_json, encoding="utf-8") as f:
-        wd = json.load(f)
-
-    # Normalize whisper input (start/end in seconds + words array).
-    whisper_segments = []
-    for s in wd.get("transcription", []):
-        off = s.get("offsets", {})
-        whisper_segments.append({
-            "start": off.get("from", 0) / 1000.0,
-            "end":   off.get("to", 0)   / 1000.0,
-            "text":  s.get("text", "").strip(),
-            "words": s.get("words") or [],
-        })
 
     try:
         progress("Carregando pyannote.audio...")
-        from pyannote.audio import Pipeline
         import torch
+        from pyannote.audio import Pipeline  # noqa: F401  (import check)
     except ImportError as e:
         result({"error": f"pyannote.audio não instalado: {e}"}); sys.exit(1)
 
     try:
-        pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=hf_token)
+        # On CPU, torch sometimes defaults to fewer intra-op threads than the
+        # machine has cores; being explicit costs nothing and helps small boxes.
+        try:
+            torch.set_num_threads(max(1, os.cpu_count() or 1))
+        except Exception:
+            pass
+
+        pipeline = load_pipeline(hf_token)
         if torch.backends.mps.is_available():
             progress("Usando MPS (GPU Apple Silicon)")
             pipeline = pipeline.to(torch.device("mps"))
@@ -223,17 +271,35 @@ def main():
 
         progress("Diarizando o áudio...")
         diarization = pipeline(audio_path, **kwargs)
-
-        diar = []
-        if hasattr(diarization, "itertracks"):
-            for turn, _, sp in diarization.itertracks(yield_label=True):
-                diar.append({"start": turn.start, "end": turn.end, "speaker": sp})
-        elif hasattr(diarization, "speaker_diarization"):
-            for turn, _, sp in diarization.speaker_diarization.itertracks(yield_label=True):
-                diar.append({"start": turn.start, "end": turn.end, "speaker": sp})
+        diar = extract_turns(diarization)
 
         if not diar:
             result({"error": "Não foi possível identificar vozes no áudio."}); sys.exit(1)
+
+        # In parallel mode, whisper may still be transcribing: block only now,
+        # after the heavy diarization work, right before the cheap assignment.
+        if wait_json and not os.path.exists(whisper_json):
+            progress("Vozes identificadas. Aguardando a transcrição terminar...")
+            deadline = time.monotonic() + WAIT_JSON_TIMEOUT_S
+            while not os.path.exists(whisper_json):
+                if time.monotonic() > deadline:
+                    result({"error": "Transcrição não terminou a tempo (whisper JSON ausente)."})
+                    sys.exit(1)
+                time.sleep(0.5)
+
+        with open(whisper_json, encoding="utf-8") as f:
+            wd = json.load(f)
+
+        # Normalize whisper input (start/end in seconds + words array).
+        whisper_segments = []
+        for s in wd.get("transcription", []):
+            off = s.get("offsets", {})
+            whisper_segments.append({
+                "start": off.get("from", 0) / 1000.0,
+                "end":   off.get("to", 0)   / 1000.0,
+                "text":  s.get("text", "").strip(),
+                "words": s.get("words") or [],
+            })
 
         # Order matters here: fold phantom speakers into their nearest real
         # neighbor FIRST (otherwise smooth_diar's "same-speaker sandwich" rule

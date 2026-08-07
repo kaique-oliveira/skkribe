@@ -4,7 +4,7 @@ export function ModelLoading({ message, progress = 0.2 }) {
   const r = 30, c = 2 * Math.PI * r
   const dash = c * Math.min(1, Math.max(0.08, progress))
   return (
-    <div className="flex flex-col items-center w-full max-w-[440px] mx-auto px-6 pt-8 space-y-[22px]">
+    <div className="my-auto py-8 flex flex-col items-center w-full max-w-[440px] mx-auto px-6 space-y-[22px]">
       <PopIn>
         <div className="relative w-16 h-16">
           <svg width="64" height="64" viewBox="0 0 64 64">

@@ -22,7 +22,7 @@ export function DropZone({ onFileSelected }) {
 
   return (
     <div
-      className="flex flex-col items-center w-full max-w-[480px] mx-auto px-6"
+      className="my-auto py-8 flex flex-col items-center w-full max-w-[480px] mx-auto px-6"
       onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
       onDragLeave={() => setDragging(false)}
       onDrop={onDrop}

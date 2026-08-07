@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { PopIn } from '../components/PopIn'
 import { LinkButton } from '../components/Buttons'
 import { IconArrowRight, IconPersonWave, IconUserOne, IconUsersTwo, IconUsersThree, IconSparkles } from '../components/icons'
@@ -13,9 +14,27 @@ const OPTIONS = [
   { count: 3,    title: '3 pessoas', subtitle: 'Reunião pequena com 3 falantes exatos',  icon: <IconUsersThree />, tint: '#F59E0B' },
 ]
 
+// Whisper model modes (see MODEL_MODES in main/index.js). `balanced` ships
+// with the app; the other two are downloaded once, on first use.
+const MODES = [
+  { key: 'fast',     label: 'Rápido',   hint: 'turbo · ótimo na maioria dos áudios' },
+  { key: 'balanced', label: 'Padrão',   hint: 'large-v3 · melhor equilíbrio' },
+  { key: 'max',      label: 'Máximo',   hint: 'large-v3 completo · baixa 3 GB' },
+]
+const MODE_STORAGE_KEY = 'skkribe.modelMode'
+
 export function SpeakerCount({ fileName, onConfirm, onCancel }) {
+  const [mode, setMode] = useState(() => {
+    const saved = localStorage.getItem(MODE_STORAGE_KEY)
+    return MODES.some((m) => m.key === saved) ? saved : 'balanced'
+  })
+  const pickMode = (key) => {
+    setMode(key)
+    localStorage.setItem(MODE_STORAGE_KEY, key)
+  }
+
   return (
-    <div className="flex flex-col items-center w-full max-w-[480px] mx-auto px-6">
+    <div className="my-auto py-8 flex flex-col items-center w-full max-w-[480px] mx-auto px-6">
       <PopIn>
         <div className="pt-3 relative w-[76px] h-[76px]">
           <div className="absolute inset-0 rounded-full bg-accent-light" />
@@ -39,11 +58,33 @@ export function SpeakerCount({ fileName, onConfirm, onCancel }) {
         </div>
       </PopIn>
 
-      <div className="mt-6 w-full space-y-2">
+      <PopIn delay={0.14}>
+        <div className="mt-5 w-full">
+          <div className="flex rounded-full bg-nested p-1 gap-1">
+            {MODES.map((m) => (
+              <button
+                key={m.key}
+                onClick={() => pickMode(m.key)}
+                title={m.hint}
+                className={`flex-1 py-1.5 rounded-full text-[12px] font-semibold transition-colors ${
+                  mode === m.key ? 'bg-white text-ink-1 shadow-sm' : 'text-ink-2 hover:text-ink-1'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-center text-[11px] text-ink-3">
+            {MODES.find((m) => m.key === mode)?.hint}
+          </p>
+        </div>
+      </PopIn>
+
+      <div className="mt-4 w-full space-y-2">
         {OPTIONS.map((opt, idx) => (
           <PopIn key={opt.title} delay={0.18 + idx * 0.06}>
             <button
-              onClick={() => onConfirm(opt.count)}
+              onClick={() => onConfirm(opt.count, mode)}
               className="w-full flex items-center gap-3.5 p-3.5 rounded-nested bg-nested hover:bg-hover transition-colors text-left"
             >
               <span

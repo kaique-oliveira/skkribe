@@ -5,12 +5,12 @@
  * platform + arch.
  *
  * Why bundle Python instead of using the system one?
- *   The diarization stack (pyannote.audio + torch) is extremely sensitive to
- *   the Python version. We pin torch<2.6 (to keep the pre-2.6 torch.load
- *   default that pyannote checkpoints rely on), and torch<2.6 only ships
- *   wheels for Python 3.9 to 3.12. A user (or CI runner) whose system `python3`
- *   is 3.13/3.14, or missing python3-venv, would fail. Shipping our own
- *   3.11 makes the venv deterministic and identical on macOS, Windows, Linux.
+ *   The diarization stack (pyannote.audio + torch) is sensitive to the Python
+ *   version: wheel availability lags new releases, so a user (or CI runner)
+ *   whose system `python3` is a brand-new major, or who is missing
+ *   python3-venv (Debian/Ubuntu ship it separately), would fail at install
+ *   time with a cryptic error. Shipping our own 3.11 makes the venv
+ *   deterministic and identical on macOS, Windows and Linux.
  *
  * We pin a known release and build the asset URL directly. Querying the GitHub
  * API for "latest" rate-limits anonymous CI requests (HTTP 403), and a pinned

@@ -21,6 +21,27 @@
      element, we get the same calm "no chrome" feel as the SwiftUI app. */
   *:focus { outline: none; }
   button { -webkit-app-region: no-drag; }
+
+  /* Slim, rounded scrollbars. macOS already hides overlay scrollbars, but on
+     Windows/Linux Chromium paints chunky gutter bars that fight the soft
+     design — this styles them everywhere Chromium is in charge. */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.16);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.28);
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-corner { background: transparent; }
+
+  /* Text selection in the transcript picks up a soft tint of the accent. */
+  ::selection { background: rgba(220, 38, 38, 0.14); }
 }
 
 @layer utilities {

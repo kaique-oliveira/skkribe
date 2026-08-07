@@ -15,7 +15,7 @@ export function Processing({ currentPhase, elapsed, startTime, progressMessage, 
   const visiblePhases = isMonologue ? allPhaseKeys.filter(k => k !== 'diarizing') : allPhaseKeys
 
   return (
-    <div className="flex flex-col items-center w-full max-w-[520px] mx-auto px-6 pt-6 space-y-[22px]">
+    <div className="my-auto py-8 flex flex-col items-center w-full max-w-[520px] mx-auto px-6 space-y-[22px]">
       <PopIn>
         <div className="relative w-20 h-20">
           <div className="absolute inset-0 rounded-full bg-accent-light" />

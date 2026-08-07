@@ -38,7 +38,7 @@ export function App() {
   }, [])
 
   // ── Pipeline trigger.
-  const startTranscription = useCallback(async (filePath, expectedSpeakers) => {
+  const startTranscription = useCallback(async (filePath, expectedSpeakers, mode) => {
     s.startProcessing({ filePath, monologue: expectedSpeakers === 1 })
 
     // Listen to progress events for the lifetime of this transcription.
@@ -51,7 +51,7 @@ export function App() {
     })
 
     try {
-      const { fileName, segments } = await window.skkribe.transcribe(filePath, expectedSpeakers)
+      const { fileName, segments } = await window.skkribe.transcribe(filePath, { expectedSpeakers, mode })
       s.finishProcessing({ fileName, segments })
     } catch (err) {
       const msg = err?.message || String(err)
@@ -85,7 +85,7 @@ export function App() {
     case STATUS.choosingSpeakers:
       content = <SpeakerCount
         fileName={s.pendingFilePath?.split('/').pop() || ''}
-        onConfirm={(count) => startTranscription(s.pendingFilePath, count)}
+        onConfirm={(count, mode) => startTranscription(s.pendingFilePath, count, mode)}
         onCancel={s.reset}
       />
       break
@@ -114,22 +114,36 @@ export function App() {
       // Boot/setup errors → reload to re-run checkSetup. Transcription errors
       // would benefit from a soft reset, but reload is safe in both cases
       // (the user has nothing in-flight when the error screen is showing).
-      content = <ErrorView message={bootError || s.errorMessage} onRetry={() => {
-        window.location.reload()
-      }} />
+      content = <ErrorView
+        message={bootError || s.errorMessage}
+        onRetry={() => window.location.reload()}
+        onChangeToken={async () => {
+          // Drop the saved token, then reload: checkSetup now reports no token
+          // and the first-run flow reopens on the token form.
+          await window.skkribe.clearToken()
+          window.location.reload()
+        }}
+      />
       break
     default:
       content = null
   }
 
+  const isMac = window.skkribe?.platform === 'darwin'
+
   return (
     <div className="w-full h-full bg-bg text-ink-1 overflow-hidden flex flex-col">
-      {/* Top region acts as the macOS drag handle (hiddenInset title bar) and leaves room for traffic lights. */}
-      <div className="h-7 drag-region shrink-0" />
+      {/* On macOS (hiddenInset title bar) the top strip is the drag handle and
+          leaves room for the traffic lights. Windows/Linux keep their native
+          title bar, so only a small breathing space is needed. */}
+      <div className={`${isMac ? 'h-7 drag-region' : 'h-2'} shrink-0`} />
 
       {/* Cross-fade between views, the per-view PopIn modifiers on individual
           elements handle the rich entrance choreography; this wrapper just
-          smooths the transition. Mode='wait' avoids double-mount layout shifts. */}
+          smooths the transition. Mode='wait' avoids double-mount layout shifts.
+          Hero-style views (drop zone, progress…) get a min-h-full flex column
+          so their `my-auto` root optically centers on tall windows; Result and
+          FirstRunSetup manage their own full-height layouts. */}
       <div className="flex-1 overflow-y-auto pt-1 relative">
         <AnimatePresence mode="wait">
           <motion.div
@@ -138,7 +152,7 @@ export function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.16, ease: 'easeOut' }}
-            className="h-full"
+            className={[STATUS.done, STATUS.firstRun].includes(s.status) ? 'h-full' : 'min-h-full flex flex-col'}
           >
             {content}
           </motion.div>

@@ -29,6 +29,7 @@ Por isso a regra de ouro:
 |---|---|
 | App Electron (UI) | compilado pelo Vite |
 | Binário `whisper.cpp` | compilado por `pnpm run setup:whisper` |
+| Binário `whisper.cpp` Vulkan (GPU, só Win/Linux) | `SKKRIBE_VULKAN=1 pnpm run setup:whisper` (requer Vulkan SDK; o CI faz isso) |
 | Modelo VAD (detector de voz, ~864 KB) | baixado por `setup:whisper` |
 | Script `diarize.py` | já está no repositório |
 | Runtime Python 3.11 portátil (~30 MB) | baixado por `pnpm run setup:python` (todas as plataformas) |
@@ -94,6 +95,7 @@ Os instaladores ficam disponíveis como **artifacts** da execução (14 dias).
 pnpm install
 pnpm install --dir src/renderer
 pnpm run setup:whisper        # compila o whisper.cpp + baixa o VAD
+                              # (Win/Linux: SKKRIBE_VULKAN=1 adiciona o build GPU; requer Vulkan SDK)
 pnpm run setup:python         # baixa o Python 3.11 portátil
 
 # empacotar (rode no SO correspondente)

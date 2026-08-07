@@ -48,9 +48,8 @@ exige que você aceite os termos de uso dele. Por isso o app pede um "token".
 A própria tela do app mostra o passo a passo, mas resumindo:
 
 1. Crie uma conta grátis em [huggingface.co](https://huggingface.co)
-2. Aceite as licenças (botão **"Agree and access repository"**) em:
-   - https://huggingface.co/pyannote/segmentation-3.0
-   - https://huggingface.co/pyannote/speaker-diarization-3.1
+2. Aceite as condições (botão **"Agree and access repository"**) em:
+   - https://huggingface.co/pyannote/speaker-diarization-community-1
 3. Gere um token (tipo **Read**) em
    [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
 4. Cole no app (começa com `hf_`)

@@ -97,7 +97,8 @@ export function Result({
     <div className="flex flex-col h-full">
       {/* Fixed header */}
       <PopIn>
-        <div className="px-6 pt-5 pb-4 bg-bg space-y-3.5">
+        <div className="px-6 pt-5 pb-4 bg-bg">
+          <div className="max-w-[760px] mx-auto w-full space-y-3.5">
           {/* row 1: title block */}
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center text-accent text-base shrink-0">📄</div>
@@ -139,6 +140,7 @@ export function Result({
               </>
             )}
             <span className="flex-1" />
+            </div>
           </div>
         </div>
       </PopIn>
@@ -147,7 +149,7 @@ export function Result({
 
       {/* Scrollable transcript */}
       <div className="flex-1 overflow-y-auto">
-        <div className="px-6 pt-4 pb-[88px] max-w-full">
+        <div className="px-6 pt-4 pb-[88px] max-w-[760px] mx-auto w-full">
           <div className="flex items-center gap-2 mb-3.5">
             <span className="text-ink-2 text-sm">💬</span>
             <span className="text-[15px] font-semibold text-ink-1">Transcrição</span>
