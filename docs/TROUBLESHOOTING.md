@@ -39,10 +39,48 @@ escolha "1 pessoa" (pula a diarização inteira).
 
 ### Transcrição muito lenta no Windows/Linux
 
-Esperado. Sem GPU Apple, o pyannote roda na CPU (~1x a 2x a duração do áudio).
-No Mac (Apple Silicon) é bem mais rápido porque usa o Metal. Se você tem GPU
-NVIDIA, dá pra acelerar reinstalando o PyTorch com CUDA dentro do venv
-(`userData/python/venv`), avançado.
+O Skkribe usa a GPU quando encontra uma (Metal no macOS, Vulkan no Windows e
+Linux). Se estiver lento, provavelmente está caindo na CPU:
+
+- A **transcrição** (whisper) usa Vulkan se houver driver de GPU instalado. Sem
+  ele, roda na CPU — nesse caso, escolha o modo **Rápido** (turbo) na tela de
+  contagem de pessoas, que é várias vezes mais veloz.
+- A **identificação de vozes** (pyannote) roda na CPU no Windows/Linux (~1x a 2x
+  a duração do áudio). No Mac usa o Metal e é bem mais rápida. Com GPU NVIDIA dá
+  pra acelerar reinstalando o PyTorch com CUDA dentro do venv
+  (`userData/python/venv`), avançado.
+
+---
+
+## macOS
+
+### "O app está danificado e não pode ser aberto" / "corrompido"
+
+**Não é corrupção.** Como o app não é assinado com uma conta paga da Apple, o
+macOS marca o download como "quarentena" e, no Apple Silicon, exibe essa
+mensagem. O app está íntegro e assinado localmente (ad-hoc).
+
+Remova a quarentena pelo Terminal — no `.dmg` baixado, antes de instalar:
+
+```bash
+xattr -dr com.apple.quarantine ~/Downloads/Skkribe-*-arm64.dmg
+```
+
+Depois abra o `.dmg` e arraste pra Aplicativos. Se já tinha copiado o app antes:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Skkribe.app
+```
+
+Para conferir que o problema é só a quarentena (e não o app):
+
+```bash
+xattr ~/Downloads/Skkribe-*-arm64.dmg     # se listar "com.apple.quarantine", é isto
+codesign -dv /Applications/Skkribe.app 2>&1 | grep Signature   # deve mostrar "adhoc"
+```
+
+> **Botão direito → Abrir** às vezes funciona, mas no Apple Silicon costuma
+> insistir no "danificado". O `xattr` é o caminho confiável.
 
 ---
 

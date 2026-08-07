@@ -89,6 +89,10 @@ transcritos em paralelo, aproveitando todos os núcleos da máquina.
    - **Windows** (x64) → `.exe`
    - **Linux** (x64) → `.AppImage`
 2. Instale e abra normalmente.
+   > **macOS:** se aparecer "o app está danificado", é só o Gatekeeper (o app não
+   > é assinado por conta paga da Apple). Rode uma vez:
+   > `xattr -dr com.apple.quarantine ~/Downloads/Skkribe-*-arm64.dmg` e reabra.
+   > Detalhes em [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md#macos-o-app-está-danificado-e-não-pode-ser-aberto).
 3. Na primeira vez, o app pede um **token gratuito da HuggingFace** (≈2 min, o
    guia aparece na tela) e baixa os modelos automaticamente (~2,7 GB, uma vez só).
 4. Pronto. Da próxima vez abre direto.

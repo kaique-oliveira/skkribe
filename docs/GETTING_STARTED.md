@@ -12,14 +12,36 @@ Baixe o arquivo da sua plataforma em
 
 | Sistema | Arquivo | Como instalar |
 |---|---|---|
-| **macOS** | `Skkribe-1.0.0-arm64.dmg` | Abra o `.dmg`, arraste o Skkribe pra pasta Aplicativos |
-| **Windows** | `Skkribe Setup 1.0.0.exe` | Execute, siga o instalador |
-| **Linux** | `Skkribe-1.0.0.AppImage` | Dê permissão de execução e abra (veja abaixo) |
+| **macOS** (Apple Silicon) | `Skkribe-…-arm64.dmg` | Abra o `.dmg`, arraste o Skkribe pra pasta Aplicativos (veja o passo abaixo) |
+| **Windows** | `Skkribe Setup ….exe` | Execute, siga o instalador |
+| **Linux** | `Skkribe-….AppImage` | Dê permissão de execução e abra (veja abaixo) |
 
-### macOS: "app não verificado"
+### macOS: "o app está danificado e não pode ser aberto"
 
-Como o app não é assinado pela Apple, na primeira abertura o macOS bloqueia.
-**Clique com o botão direito → Abrir → Abrir** (só na primeira vez).
+Isso **não** é corrupção. O app não é assinado com uma conta paga da Apple, então
+o macOS marca o download como "quarentena" e, no Apple Silicon, mostra essa
+mensagem em vez de deixar abrir. O app em si está íntegro e assinado localmente
+(ad-hoc).
+
+A forma mais confiável de resolver é remover a quarentena pelo Terminal. Rode
+isto **no `.dmg` baixado, antes de instalar** (ajuste o nome do arquivo):
+
+```bash
+xattr -dr com.apple.quarantine ~/Downloads/Skkribe-*-arm64.dmg
+```
+
+Depois abra o `.dmg` e arraste o Skkribe pra Aplicativos — agora abre no
+duplo-clique normalmente.
+
+Se você já tinha copiado o app pra Aplicativos antes de rodar o comando, aplique
+direto nele:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Skkribe.app
+```
+
+> Clicar com o **botão direito → Abrir** às vezes funciona, mas no Apple Silicon
+> costuma insistir no "danificado" — por isso o `xattr` acima é o caminho certo.
 
 ### Linux: rodar o AppImage
 
